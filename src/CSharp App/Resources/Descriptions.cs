@@ -25,6 +25,7 @@ namespace VolumetricSelection2077.Resources
             public static string CustomSelectionFilePath { get; } = "Path to the custom selection file location (e.g. MO2's overwrite folder). The same folder structure as found in the game directory is expected. If selection file is in the game directory leave this blank.";
             public static string MaxBackupFiles { get; } = "Maximum number of backup files to keep, older files will be deleted. Does not affect the output directory.";
             public static string BackupDirectory { get; } = "Directory to save backups of the selection and output after every run.";
+            public static string DestructibleMeshTreatment { get; } = "Whether to save destructible meshes as dynamic meshes (with physics, but limited filtering) or as static meshes (no physics). Only affects World Builder output.";
         }
 
         public static class Watermarks
@@ -59,5 +60,6 @@ namespace VolumetricSelection2077.Resources
             public static string CustomSelectionFilePath { get; } = "MO2 Overwrite Folder";
             public static string BackupDirectory { get; } = "Backup Directory";
             public static string MaxBackupFiles { get; } = "Max Backup Files";
+            public static string  DestructibleMeshTreatment { get; } = "Destructible Mesh Treatment";
         }
 }

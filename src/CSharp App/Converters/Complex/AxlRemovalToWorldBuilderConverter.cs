@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using DynamicData;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using VolumetricSelection2077.Enums;
 using VolumetricSelection2077.Models;
 using VolumetricSelection2077.Models.WorldBuilder.Editor;
 using VolumetricSelection2077.Models.WorldBuilder.Spawn.Entity;
@@ -24,12 +26,14 @@ public class AxlRemovalToWorldBuilderConverter
     private GameFileService _gfs;
     private List<string> _warnedTypes;
     private Dictionary<string, List<string>> _embeddedResourcePaths;
+    private SettingsService _settings;
     
     public AxlRemovalToWorldBuilderConverter()
     {
         _gfs = GameFileService.Instance;
         _warnedTypes = new List<string>();
         _embeddedResourcePaths = new Dictionary<string, List<string>>();
+        _settings = SettingsService.Instance;
     }
 
     public Element Convert(AxlRemovalFile axlFile, string rootName)
@@ -232,29 +236,60 @@ public class AxlRemovalToWorldBuilderConverter
                     if (remNode.ActorDeletions != null && remNode.ActorDeletions.Count != 0)
                         if (remNode.ActorDeletions.All(x => x != abbrInstancedDestructibleMeshNodeDataEntry.Transforms.IndexOf(transform)))
                             continue;
-                    
-                    
-                    spawnableElements.Add(new SpawnableElement
+
+                    SpawnableElement instDestMeshNode;
+                    switch (_settings.DestructibleMeshTreatment)
                     {
-                        Name = GetSpawnableName(instancedDestructibleMeshNode),
-                        Spawnable = new DynamicMesh
-                        {
-                            Position = new Vector4(transform.Position, 1),
-                            EulerRotation = transform.Rotation,
-                            Scale = transform.Scale,
+                        case DestructibleMeshTreatment.DynamicMesh:
+                            instDestMeshNode = new SpawnableElement
+                            {
+                                Name = GetSpawnableName(instancedDestructibleMeshNode),
+                                Spawnable = new DynamicMesh
+                                {
+                                    Position = new Vector4(transform.Position, 1),
+                                    EulerRotation = transform.Rotation,
+                                    Scale = transform.Scale,
                     
-                            CastLocalShadows = instancedDestructibleMeshNode.CastLocalShadows,
-                            CastShadows = instancedDestructibleMeshNode.CastShadows,
+                                    CastLocalShadows = instancedDestructibleMeshNode.CastLocalShadows,
+                                    CastShadows = instancedDestructibleMeshNode.CastShadows,
                     
-                            PrimaryRange = nodeDataEntry.MaxStreamingDistance,
-                            SecondaryRange = nodeDataEntry.UkFloat1,
-                            Uk10 = nodeDataEntry.Uk10,
-                            Uk11 = nodeDataEntry.Uk11,
+                                    PrimaryRange = nodeDataEntry.MaxStreamingDistance,
+                                    SecondaryRange = nodeDataEntry.UkFloat1,
+                                    Uk10 = nodeDataEntry.Uk10,
+                                    Uk11 = nodeDataEntry.Uk11,
                     
-                            ResourcePath = instancedDestructibleMeshNode.Mesh.DepotPath,
-                            Appearance = instancedDestructibleMeshNode.MeshAppearance,
-                        }
-                    });
+                                    ResourcePath = instancedDestructibleMeshNode.Mesh.DepotPath,
+                                    Appearance = instancedDestructibleMeshNode.MeshAppearance,
+                                }
+                            };
+                            break;
+                        case DestructibleMeshTreatment.StaticMesh:
+                            instDestMeshNode = new SpawnableElement
+                            {
+                                Name = GetSpawnableName(instancedDestructibleMeshNode),
+                                Spawnable = new Mesh()
+                                {
+                                    Position = new Vector4(transform.Position, 1),
+                                    EulerRotation = transform.Rotation,
+                                    Scale = transform.Scale,
+                    
+                                    CastLocalShadows = instancedDestructibleMeshNode.CastLocalShadows,
+                                    CastShadows = instancedDestructibleMeshNode.CastShadows,
+                    
+                                    PrimaryRange = nodeDataEntry.MaxStreamingDistance,
+                                    SecondaryRange = nodeDataEntry.UkFloat1,
+                                    Uk10 = nodeDataEntry.Uk10,
+                                    Uk11 = nodeDataEntry.Uk11,
+                    
+                                    ResourcePath = instancedDestructibleMeshNode.Mesh.DepotPath,
+                                    Appearance = instancedDestructibleMeshNode.MeshAppearance,
+                                }
+                            };
+                            break;
+                        default:
+                            throw new NotImplementedException($"Destructible Mesh Treatment {_settings.DestructibleMeshTreatment} is not implemented.");
+                    }
+                    spawnableElements.Add(instDestMeshNode);
                 }
                 break;
             case worldPhysicalDestructionNode destructionNode:
@@ -263,16 +298,36 @@ public class AxlRemovalToWorldBuilderConverter
                 
                 HandleEmbeddedResourceWarning(destructionNode.Mesh.DepotPath, sectorPath, ref sectorCR2W);
                 
-                var spawnabledestructionMesh = new SpawnableElement
+                SpawnableElement spawnabledestructionMesh; 
+                switch (_settings.DestructibleMeshTreatment)
                 {
-                    Name = GetSpawnableName(destructionNode),
-                    Spawnable = new DynamicMesh
-                    {
-                        ResourcePath = destructionNode.Mesh.DepotPath,
-                        Appearance = destructionNode.MeshAppearance,
-                        Scale = nodeDataEntry.Scale,
-                    }
-                };
+                    case DestructibleMeshTreatment.DynamicMesh:
+                        spawnabledestructionMesh = new SpawnableElement
+                        {
+                            Name = GetSpawnableName(destructionNode),
+                            Spawnable = new DynamicMesh
+                            {
+                                ResourcePath = destructionNode.Mesh.DepotPath,
+                                Appearance = destructionNode.MeshAppearance,
+                                Scale = nodeDataEntry.Scale,
+                            }
+                        };
+                        break;
+                    case DestructibleMeshTreatment.StaticMesh:
+                        spawnabledestructionMesh = new SpawnableElement
+                        {
+                            Name = GetSpawnableName(destructionNode),
+                            Spawnable = new Mesh()
+                            {
+                                ResourcePath = destructionNode.Mesh.DepotPath,
+                                Appearance = destructionNode.MeshAppearance,
+                                Scale = nodeDataEntry.Scale,
+                            }
+                        };
+                        break;
+                    default:
+                        throw new NotImplementedException($"Destructible Mesh Treatment {_settings.DestructibleMeshTreatment} is not implemented.");
+                }
                 PopulateSpawnable(ref spawnabledestructionMesh, nodeDataEntry);
                 spawnableElements.Add(spawnabledestructionMesh);
                 break;
@@ -281,15 +336,31 @@ public class AxlRemovalToWorldBuilderConverter
                     return spawnableElements;
                 
                 HandleEmbeddedResourceWarning(dynamicMeshNode.Mesh.DepotPath, sectorPath, ref sectorCR2W);
-                
-                var spawnabledynamicMesh = new SpawnableElement
+
+                SpawnableElement spawnabledynamicMesh;
+                switch (_settings.DestructibleMeshTreatment)
                 {
-                    Name = GetSpawnableName(dynamicMeshNode),
-                    Spawnable = new DynamicMesh
-                    {
-                        StartAsleep = dynamicMeshNode.StartAsleep,
-                    }
-                };
+                    case DestructibleMeshTreatment.DynamicMesh:
+                        spawnabledynamicMesh = new SpawnableElement
+                        {
+                            Name = GetSpawnableName(dynamicMeshNode),
+                            Spawnable = new DynamicMesh
+                            {
+                                StartAsleep = dynamicMeshNode.StartAsleep,
+                            }
+                        };
+                        break;
+                    case DestructibleMeshTreatment.StaticMesh:
+                        spawnabledynamicMesh = new SpawnableElement
+                        {
+                            Name = GetSpawnableName(dynamicMeshNode),
+                            Spawnable = new Mesh()
+                        };
+                        break;
+                    default:
+                        throw new NotImplementedException($"Destructible Mesh Treatment {_settings.DestructibleMeshTreatment} is not implemented.");
+                }
+                
                 PopulateBaseMesh(ref spawnabledynamicMesh, dynamicMeshNode, nodeDataEntry);
                 spawnableElements.Add(spawnabledynamicMesh);
                 break;
