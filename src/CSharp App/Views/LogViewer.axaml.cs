@@ -13,11 +13,12 @@ namespace VolumetricSelection2077.Views
     public partial class LogViewer : UserControl
     {
         private ScrollViewer? _scrollViewer;
-        public ObservableCollection<LogMessage> LogMessages { get; } = new();
-        private List<LogMessage> _pendingMessages = new();
-        private DispatcherTimer _batchTimer;
+        private readonly List<LogMessage> _pendingMessages = new();
+        private readonly DispatcherTimer _batchTimer;
         private readonly object _logLock = new();
         private const int MaxLogMessages = 10000;
+        
+        public ObservableCollection<LogMessage> LogMessages { get; } = new();
         
         public LogViewer()
         {
@@ -29,18 +30,18 @@ namespace VolumetricSelection2077.Views
             _batchTimer.Start();
         }
 
-        protected override void OnLoaded(RoutedEventArgs e)
-        {
-            base.OnLoaded(e);
-            _scrollViewer = this.FindControl<ScrollViewer>("LogScrollViewer");
-        }
-
         public void AddLogMessage(string message, LogEventLevel level)
         {
             lock (_logLock)
             {
                 _pendingMessages.Add(new LogMessage(message, level));
             }
+        }
+        
+        protected override void OnLoaded(RoutedEventArgs e)
+        {
+            base.OnLoaded(e);
+            _scrollViewer = this.FindControl<ScrollViewer>("LogScrollViewer");
         }
         
         private void ProcessPendingMessages()
