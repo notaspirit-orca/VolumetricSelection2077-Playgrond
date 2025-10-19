@@ -184,6 +184,19 @@ namespace VolumetricSelection2077.ViewModels
             }
         }
         
+        public ObservableCollection<DestructibleMeshTreatment> DestructibleMeshTreatments { get; set; }
+
+        public DestructibleMeshTreatment SelectedDestructibleMeshTreatment
+        {
+            get => Settings.DestructibleMeshTreatment;
+            set
+            {
+                Settings.DestructibleMeshTreatment = value;
+                OnPropertyChanged(nameof(SelectedDestructibleMeshTreatment));
+                Settings.SaveSettings();
+            }
+        }
+        
         public MainWindowViewModel()
         {
             Settings = SettingsService.Instance;
@@ -204,6 +217,7 @@ namespace VolumetricSelection2077.ViewModels
             SaveFileModes = new ObservableCollection<SaveFileMode>(Enum.GetValues(typeof(SaveFileMode)).Cast<SaveFileMode>());
             SaveFileFormats = new ObservableCollection<SaveFileFormat>(Enum.GetValues(typeof(SaveFileFormat)).Cast<SaveFileFormat>());
             SaveFileLocations = new ObservableCollection<SaveFileLocation>(Enum.GetValues(typeof(SaveFileLocation)).Cast<SaveFileLocation>());
+            DestructibleMeshTreatments = new ObservableCollection<DestructibleMeshTreatment>(Enum.GetValues(typeof(DestructibleMeshTreatment)).Cast<DestructibleMeshTreatment>());
             
             try
             {

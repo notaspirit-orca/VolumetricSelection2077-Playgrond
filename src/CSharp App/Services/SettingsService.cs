@@ -35,6 +35,7 @@ public class SettingsService
         IsFiltersMWVisible = false;
         IsParametersMWVisible = false;
         SaveFileFormat = SaveFileFormat.ArchiveXLJson;
+        DestructibleMeshTreatment = DestructibleMeshTreatment.DynamicMesh;
         SaveMode = SaveFileMode.New;
         SupportModdedResources = false;
         CacheModdedResources = true;
@@ -63,8 +64,7 @@ public class SettingsService
             }
         }
     }
-
-    // Properties
+    
     public string GameDirectory { get; set; }
     public bool CacheEnabled { get; set; }
     public string CacheDirectory { get; set; }
@@ -94,6 +94,7 @@ public class SettingsService
     public bool IsFiltersMWVisible { get; set; }
     public bool IsParametersMWVisible { get; set; }
     public SaveFileMode SaveMode { get; set; }
+    public DestructibleMeshTreatment DestructibleMeshTreatment { get; set; }
     public bool AutoUpdate { get; set; }
     public bool DidUpdate { get; set; }
     public bool GameRunningDuringUpdate { get; set; }
@@ -163,8 +164,7 @@ public class SettingsService
 
                 SaveMode = (SaveFileMode?)j.Value<long?>(nameof(SaveMode)) ?? SaveMode;
                 SaveFileFormat = (SaveFileFormat?)j.Value<long?>(nameof(SaveFileFormat)) ?? SaveFileFormat;
-                
-                
+                DestructibleMeshTreatment = (DestructibleMeshTreatment?)j.Value<long?>(nameof(DestructibleMeshTreatment)) ?? DestructibleMeshTreatment;
                 
                 SupportModdedResources = j.Value<bool?>(nameof(SupportModdedResources)) ?? SupportModdedResources;
                 AutoUpdate = j.Value<bool?>(nameof(AutoUpdate)) ?? AutoUpdate;

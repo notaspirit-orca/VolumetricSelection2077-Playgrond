@@ -339,6 +339,23 @@
                         ItemsSource="{Binding SaveFileModes}"
                         Margin="5"
                         SelectedItem="{Binding SelectedSaveFileMode, Mode=TwoWay}" />
+                    <TextBlock
+                        Grid.Column="0"
+                        Grid.Row="1"
+                        HorizontalAlignment="Left"
+                        IsVisible="{Binding ParameterSelectionVisibility}"
+                        Margin="5"
+                        Text="{x:Static resources:Labels.DestructibleMeshTreatment}"
+                        ToolTip.Tip="{x:Static resources:ToolTips.DestructibleMeshTreatment}"
+                        VerticalAlignment="Center" />
+                    <ComboBox
+                        Grid.Column="1"
+                        Grid.Row="1"
+                        HorizontalAlignment="Stretch"
+                        IsVisible="{Binding ParameterSelectionVisibility}"
+                        ItemsSource="{Binding DestructibleMeshTreatments}"
+                        Margin="5"
+                        SelectedItem="{Binding SelectedDestructibleMeshTreatment, Mode=TwoWay}" />
                 </Grid>
             </Grid>
             <Grid Grid.Row="6" Margin="5">
