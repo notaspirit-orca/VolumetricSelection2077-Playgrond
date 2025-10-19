@@ -3,7 +3,9 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using Avalonia;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using VolumetricSelection2077.Resources;
 using VolumetricSelection2077.Services;
 using VolumetricSelection2077.Views;
@@ -14,87 +16,76 @@ namespace VolumetricSelection2077.ViewModels
 {
     public class MainWindowViewModel : INotifyPropertyChanged
     {
-        public SettingsService Settings { get; set; }
-        private bool _isProcesing { get; set; }
+        private bool _isProcessing;
+        private bool _isMainTaskProcessing;
+        private bool _isAppInitialized;
+        private bool _isBenchmarkProcessing;
+        private bool _isSettingsOpen;
+        private string _searchQuery;
+        private ObservableCollection<NodeTypeFilterItem> _nodeTypeFilterItems;
+        private ObservableCollection<NodeTypeFilterItem> _filteredNodeTypeFilterItems;
+        private int _checkedCount;
+        private readonly ObservableCollection<string> _resourceNameFilter;
         
+        public SettingsService Settings { get; set; }
         public Bitmap VS2077Icon { get; set; }
         public bool IsProcessing
         {
-            get => _isProcesing;
+            get => _isProcessing;
             set
             {
-                _isProcesing = value;
+                _isProcessing = value;
                 OnPropertyChanged(nameof(IsProcessing));
                 OnPropertyChanged(nameof(ButtonsAvailable));
                 OnPropertyChanged(nameof(MainTaskAvailable));
             }
         }
-
         public DebugWindow? DebugWindowInstance { get; set; }
-
         public bool DebugWindowButtonEnabled => DebugWindowInstance == null;
         public bool DebugWindowButtonSpinnerEnabled => DebugWindowInstance != null;
-        public void DebugWindowInstanceChanged()
-        {
-            OnPropertyChanged(nameof(DebugWindowButtonEnabled));
-            OnPropertyChanged(nameof(DebugWindowInstance));
-            OnPropertyChanged(nameof(DebugWindowButtonSpinnerEnabled));
-        }
-        
-        public bool ButtonsAvailable
-        {
-            get => !_isProcesing;
-        }
+        public bool ButtonsAvailable => !_isProcessing;
 
-        private bool _mainTaskprocessing { get; set; }
         public bool MainTaskProcessing
         {
-            get => _mainTaskprocessing;
+            get => _isMainTaskProcessing;
             set
             {
-                _mainTaskprocessing = value;
-                IsProcessing = _mainTaskprocessing;
+                _isMainTaskProcessing = value;
+                IsProcessing = _isMainTaskProcessing;
                 OnPropertyChanged(nameof(MainTaskProcessing));
             }
         }
 
-        private bool _AppInitialized { get; set; }
-
         public bool AppInitialized
         {
-            get => _AppInitialized;
+            get => _isAppInitialized;
             set
             {
-                _AppInitialized = value;
+                _isAppInitialized = value;
                 OnPropertyChanged(nameof(AppInitialized));
             }
         }
 
-        public bool MainTaskAvailable
-        {
-            get => AppInitialized && ButtonsAvailable;
-        }
-        
-        private bool _benchmarkProcessing { get; set; }
+        public bool MainTaskAvailable => AppInitialized && ButtonsAvailable;
+
         public bool BenchmarkProcessing
         {
-            get => _benchmarkProcessing;
+            get => _isBenchmarkProcessing;
             set
             {
-                _benchmarkProcessing = value;
-                IsProcessing = _benchmarkProcessing;
+                _isBenchmarkProcessing = value;
+                IsProcessing = _isBenchmarkProcessing;
                 OnPropertyChanged(nameof(BenchmarkProcessing));
             }
         }
         
-        private bool _settingsOpen { get; set; }
         public bool SettingsOpen
         {
-            get => _settingsOpen;
+            get => _isSettingsOpen;
             set
             {
-                _settingsOpen = value;
-                IsProcessing = _settingsOpen;
+                _isSettingsOpen = value;
+                IsProcessing = _isSettingsOpen;
                 OnPropertyChanged(nameof(SettingsOpen));
             }
         }
@@ -114,8 +105,6 @@ namespace VolumetricSelection2077.ViewModels
         }
         
         public string FilterModeText => FilterModeOr ? "Or" : "And";
-
-        private ObservableCollection<string> _resourceNameFilter;
 
         public string OutputFilename
         {
@@ -197,68 +186,6 @@ namespace VolumetricSelection2077.ViewModels
             }
         }
         
-        public MainWindowViewModel()
-        {
-            Settings = SettingsService.Instance;
-            _resourceNameFilter = Settings.ResourceNameFilter;
-            _resourceNameFilter.CollectionChanged += ResourceNameFilter_CollectionChanged;
-            Settings.DebugNameFilter.CollectionChanged += DebugNameFilter_CollectionChanged;
-            _nodeTypeFilterItems = new();
-            var enumValues = Enum.GetValues(typeof(NodeTypeProcessingOptions));
-            for (int i = 0; i < enumValues.Length; i++)
-            {
-                var item = new NodeTypeFilterItem(enumValues.GetValue(i)?.ToString() ?? " ", i, Settings.NodeTypeFilter);
-                item.PropertyChanged += OnNodeTypeFilterItemChanged;
-                NodeTypeFilterItems.Add(item);
-            }
-            _filteredNodeTypeFilterItems = _nodeTypeFilterItems;
-            CheckedCount = NodeTypeFilterItems.Count(item => item.IsChecked);
-            
-            SaveFileModes = new ObservableCollection<SaveFileMode>(Enum.GetValues(typeof(SaveFileMode)).Cast<SaveFileMode>());
-            SaveFileFormats = new ObservableCollection<SaveFileFormat>(Enum.GetValues(typeof(SaveFileFormat)).Cast<SaveFileFormat>());
-            SaveFileLocations = new ObservableCollection<SaveFileLocation>(Enum.GetValues(typeof(SaveFileLocation)).Cast<SaveFileLocation>());
-            DestructibleMeshTreatments = new ObservableCollection<DestructibleMeshTreatment>(Enum.GetValues(typeof(DestructibleMeshTreatment)).Cast<DestructibleMeshTreatment>());
-            
-            try
-            {
-                 VS2077Icon = new Bitmap(Path.Combine(AppContext.BaseDirectory, "assets",
-                   "VolumetricSelection2077MSStyle.png"));
-            }
-            catch (Exception ex)
-            {
-                Logger.Exception(ex, "Failed to load VS2077 Icon!");
-            }
-            
-        }
-        private void ResourceNameFilter_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-            OnPropertyChanged(nameof(ResourcePathFilterCount));
-            OnPropertyChanged(nameof(FilterSectionButtonLabel));
-        }
-
-        private void DebugNameFilter_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-            OnPropertyChanged(nameof(DebugNameFilterCount));
-            OnPropertyChanged(nameof(FilterSectionButtonLabel));
-        }
-        
-        private string _searchQuery;
-        private ObservableCollection<NodeTypeFilterItem> _nodeTypeFilterItems;
-        private ObservableCollection<NodeTypeFilterItem> _filteredNodeTypeFilterItems;
-        private int _checkedCount;
-        public ObservableCollection<NodeTypeFilterItem> NodeTypeFilterItems
-        {
-            get => _nodeTypeFilterItems;
-            set
-            {
-                if (_nodeTypeFilterItems == value) return;
-                _nodeTypeFilterItems = value;
-                OnPropertyChanged(nameof(NodeTypeFilterItems));
-                OnPropertyChanged(nameof(FilterSectionButtonLabel));
-                CheckedCount = NodeTypeFilterItems.Count(item => item.IsChecked);
-            }
-        }
-
         public ObservableCollection<NodeTypeFilterItem> FilteredNodeTypeFilterItems
         {
             get => _filteredNodeTypeFilterItems;
@@ -289,26 +216,11 @@ namespace VolumetricSelection2077.ViewModels
             get => _checkedCount;
             set
             {
-                if (_checkedCount != value)
-                {
-                    _checkedCount = value;
-                    OnPropertyChanged(nameof(CheckedCount)); // Notify the UI that CheckedCount has changed
-                    OnPropertyChanged(nameof(FilterSectionButtonLabel));
-                }
-            }
-        }
-        public int TotalCount => NodeTypeFilterItems.Count();
-        
-        private void FilterItems()
-        {
-            if (string.IsNullOrWhiteSpace(_searchQuery))
-            {
-                FilteredNodeTypeFilterItems = new ObservableCollection<NodeTypeFilterItem>(_nodeTypeFilterItems);
-            }
-            else
-            {
-                var filtered = _nodeTypeFilterItems.Where(item => item.Label.ToLower().Contains(_searchQuery.ToLower())).ToList();
-                FilteredNodeTypeFilterItems = new ObservableCollection<NodeTypeFilterItem>(filtered);
+                if (_checkedCount == value)
+                    return;
+                _checkedCount = value;
+                OnPropertyChanged(nameof(CheckedCount));
+                OnPropertyChanged(nameof(FilterSectionButtonLabel));
             }
         }
         
@@ -323,6 +235,89 @@ namespace VolumetricSelection2077.ViewModels
                 OnPropertyChanged(nameof(ParametersSectionButtonLabel));
                 Settings.SaveSettings();
             }
+        }
+        
+        public ObservableCollection<NodeTypeFilterItem> NodeTypeFilterItems
+        {
+            get => _nodeTypeFilterItems;
+            set
+            {
+                if (_nodeTypeFilterItems == value) return;
+                _nodeTypeFilterItems = value;
+                OnPropertyChanged(nameof(NodeTypeFilterItems));
+                OnPropertyChanged(nameof(FilterSectionButtonLabel));
+                CheckedCount = NodeTypeFilterItems.Count(item => item.IsChecked);
+            }
+        }
+        
+        public int TotalCount => NodeTypeFilterItems.Count;
+        
+        public MainWindowViewModel()
+        {
+            Settings = SettingsService.Instance;
+            _resourceNameFilter = Settings.ResourceNameFilter;
+            _resourceNameFilter.CollectionChanged += ResourceNameFilter_CollectionChanged;
+            Settings.DebugNameFilter.CollectionChanged += DebugNameFilter_CollectionChanged;
+            _nodeTypeFilterItems = new();
+            var enumValues = Enum.GetValues(typeof(NodeTypeProcessingOptions));
+            for (int i = 0; i < enumValues.Length; i++)
+            {
+                var item = new NodeTypeFilterItem(enumValues.GetValue(i)?.ToString() ?? " ", i, Settings.NodeTypeFilter);
+                item.PropertyChanged += OnNodeTypeFilterItemChanged;
+                NodeTypeFilterItems.Add(item);
+            }
+            _filteredNodeTypeFilterItems = _nodeTypeFilterItems;
+            CheckedCount = NodeTypeFilterItems.Count(item => item.IsChecked);
+            _searchQuery = "";
+            
+            SaveFileModes = new ObservableCollection<SaveFileMode>(Enum.GetValues(typeof(SaveFileMode)).Cast<SaveFileMode>());
+            SaveFileFormats = new ObservableCollection<SaveFileFormat>(Enum.GetValues(typeof(SaveFileFormat)).Cast<SaveFileFormat>());
+            SaveFileLocations = new ObservableCollection<SaveFileLocation>(Enum.GetValues(typeof(SaveFileLocation)).Cast<SaveFileLocation>());
+            DestructibleMeshTreatments = new ObservableCollection<DestructibleMeshTreatment>(Enum.GetValues(typeof(DestructibleMeshTreatment)).Cast<DestructibleMeshTreatment>());
+            
+            try
+            {
+                 VS2077Icon = new Bitmap(Path.Combine(AppContext.BaseDirectory, "assets",
+                   "VolumetricSelection2077MSStyle.png"));
+            }
+            catch (Exception ex)
+            {
+                Logger.Exception(ex, "Failed to load VS2077 Icon!");
+                VS2077Icon = new WriteableBitmap(new PixelSize(1,1), new Vector(1,1), PixelFormat.Bgra8888, AlphaFormat.Premul);
+            }
+
+        }
+        
+        private void ResourceNameFilter_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            OnPropertyChanged(nameof(ResourcePathFilterCount));
+            OnPropertyChanged(nameof(FilterSectionButtonLabel));
+        }
+
+        private void DebugNameFilter_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            OnPropertyChanged(nameof(DebugNameFilterCount));
+            OnPropertyChanged(nameof(FilterSectionButtonLabel));
+        }
+        
+        private void FilterItems()
+        {
+            if (string.IsNullOrWhiteSpace(_searchQuery))
+            {
+                FilteredNodeTypeFilterItems = new ObservableCollection<NodeTypeFilterItem>(_nodeTypeFilterItems);
+            }
+            else
+            {
+                var filtered = _nodeTypeFilterItems.Where(item => item.Label.ToLower().Contains(_searchQuery.ToLower())).ToList();
+                FilteredNodeTypeFilterItems = new ObservableCollection<NodeTypeFilterItem>(filtered);
+            }
+        }
+        
+        public void DebugWindowInstanceChanged()
+        {
+            OnPropertyChanged(nameof(DebugWindowButtonEnabled));
+            OnPropertyChanged(nameof(DebugWindowInstance));
+            OnPropertyChanged(nameof(DebugWindowButtonSpinnerEnabled));
         }
         
         private void OnNodeTypeFilterItemChanged(object? sender, PropertyChangedEventArgs e)
