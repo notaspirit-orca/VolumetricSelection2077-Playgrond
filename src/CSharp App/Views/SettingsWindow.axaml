@@ -5,7 +5,7 @@
     Title="VolumetricSelection2077"
     Width="750"
     WindowStartupLocation="CenterOwner"
-    x:Class="VolumetricSelection2077.SettingsWindow"
+    x:Class="VolumetricSelection2077.Views.SettingsWindow"
     x:DataType="local:ViewModels.SettingsViewModel"
     xmlns="https://github.com/avaloniaui"
     xmlns:avalonia="clr-namespace:LoadingIndicators.Avalonia;assembly=LoadingIndicators.Avalonia"

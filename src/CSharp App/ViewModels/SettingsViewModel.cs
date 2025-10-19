@@ -1,7 +1,9 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using Avalonia;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using VolumetricSelection2077.Models;
 using VolumetricSelection2077.Resources;
 using VolumetricSelection2077.Services;
@@ -11,11 +13,10 @@ namespace VolumetricSelection2077.ViewModels
 {
     public class SettingsViewModel : INotifyPropertyChanged
     { 
-        public SettingsService Settings { get; set; }
-
-        public SettingsViewPersistentCache PersistentCache { get; }
-
         private CacheStats _cacheStats;
+        private bool _cacheWorking;
+        public SettingsService Settings { get; }
+        public SettingsViewPersistentCache PersistentCache { get; }
         public CacheStats CacheStats
         {
             get => _cacheStats;
@@ -31,11 +32,8 @@ namespace VolumetricSelection2077.ViewModels
         }
         
         public string ClearVanillaCacheButtonLabel => Labels.ClearVanillaCache + $" [ {CacheStats.VanillaEntries} files | {CacheStats.EstVanillaSize.GetFormattedSize()} ]";
-        
         public string ClearModdedCacheButtonLabel => Labels.ClearModdedCache + $" [ {CacheStats.ModdedEntries} files | {CacheStats.EstModdedSize.GetFormattedSize()} ]";
-        
         public string ClearVanillaBoundsCacheButtonLabel => Labels.ClearVanillaBoundsCache + $" [ {CacheStats.VanillaBoundsEntries} files | {CacheStats.EstVanillaBoundsSize.GetFormattedSize()} ]";
-        
         public string ClearModdedBoundsCacheButtonLabel => Labels.ClearModdedBoundsCache + $" [ {CacheStats.ModdedBoundsEntries} files | {CacheStats.EstModdedBoundsSize.GetFormattedSize()} ]";
         
         public bool CacheEnabled 
@@ -57,8 +55,7 @@ namespace VolumetricSelection2077.ViewModels
                 OnPropertyChanged(nameof(AutoUpdateEnabled));
             }
         }
-
-        private bool _cacheWorking;
+        
         public bool CacheWorking
         {
             get => _cacheWorking;
@@ -71,7 +68,6 @@ namespace VolumetricSelection2077.ViewModels
         }
         
         public bool CacheButtonsAvailable => !CacheWorking;
-        
         public Bitmap SettingsIcon { get; set; }
         
         public SettingsViewModel() 
@@ -80,15 +76,12 @@ namespace VolumetricSelection2077.ViewModels
             PersistentCache = SettingsViewPersistentCache.Instance;
             try
             {
-                if (CacheService.Instance.IsInitialized)
-                    CacheStats = CacheService.Instance.GetStats();
-                else
-                    CacheStats = new CacheStats();
+                _cacheStats = CacheService.Instance.IsInitialized ? CacheService.Instance.GetStats() : new CacheStats();
             }
             catch (Exception ex)
             {
                 Logger.Exception(ex, $"Failed to load Cache!");
-                CacheStats = new CacheStats();
+                _cacheStats = new CacheStats();
             }
 
             try
@@ -98,6 +91,7 @@ namespace VolumetricSelection2077.ViewModels
             catch(Exception ex)
             {
                 Logger.Exception(ex, $"Failed to load Settings Icon!");
+                SettingsIcon = new WriteableBitmap(new PixelSize(1,1), new Vector(1,1), PixelFormat.Bgra8888, AlphaFormat.Premul);
             }
         }
         
