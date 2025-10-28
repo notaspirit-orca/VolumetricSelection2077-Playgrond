@@ -1,34 +1,30 @@
 using Avalonia.Controls;
-using VolumetricSelection2077.Views;
 using VolumetricSelection2077.Services;
 using System;
-using System.ComponentModel;
 using System.IO;
 using Avalonia.Interactivity;
 using System.Threading.Tasks;
 using Avalonia.Threading;
-using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using VolumetricSelection2077.Enums;
 using VolumetricSelection2077.Extensions;
 using VolumetricSelection2077.Models;
-using VolumetricSelection2077.Resources;
-using VolumetricSelection2077.TestingStuff;
 using VolumetricSelection2077.ViewModels;
 using VolumetricSelection2077.ViewStructures;
 
-namespace VolumetricSelection2077;
+namespace VolumetricSelection2077.Views;
 public partial class MainWindow : Window
 {
     private readonly ProcessDispatcher _processService;
-    private MainWindowViewModel _mainWindowViewModel;
-    private ProgressBar _progressBar;
-    private ProgressBar _progressBarBroder;
-    public TextBlock ProgressTextBlock;
-    private TrackedDispatchTimer _dispatcherTimer;
-    private Progress _progress;
+    private readonly MainWindowViewModel _mainWindowViewModel;
+    private readonly ProgressBar _progressBar;
+    private readonly TrackedDispatchTimer _dispatcherTimer;
+    private readonly Progress _progress;
+    
+    public TextBlock ProgressTextBlock { get; }
+    
     public MainWindow()
     {
         InitializeComponent();
@@ -41,39 +37,44 @@ public partial class MainWindow : Window
             Console.WriteLine(ex);
         }
         DataContext = new MainWindowViewModel();
-        _mainWindowViewModel = DataContext as MainWindowViewModel;
+        _mainWindowViewModel = (DataContext as MainWindowViewModel)!;
         _processService = new ProcessDispatcher(new DialogService(this));
         Closed += OnMainWindowClosed;
         
-        _progressBar = this.FindControl<ProgressBar>("ProgressBar");
-        _progressBarBroder = this.FindControl<ProgressBar>("ProgressBarBorder");
-        ProgressTextBlock = this.FindControl<TextBlock>("TimerTextBlock");
-        if (ProgressTextBlock == null || _progressBar == null || _progressBarBroder == null)
+        var progressBar = this.FindControl<ProgressBar>("ProgressBar");
+        var progressBarBroder = this.FindControl<ProgressBar>("ProgressBarBorder");
+        var progressTextBlock = this.FindControl<TextBlock>("TimerTextBlock");
+        if (progressTextBlock == null || progressBar == null || progressBarBroder == null)
         {
-            Logger.Error($"Could not find one or more ui components: ProgressBar: {_progressBar}, TimerTextBlock: {ProgressTextBlock}, ProgressBarBorder: {_progressBarBroder}");
+            var error =
+                $"Could not find one or more ui components: ProgressBar: {_progressBar}, TimerTextBlock: {ProgressTextBlock}, ProgressBarBorder: {progressBarBroder}";
+            Logger.Error(error);
+            throw new InvalidOperationException(error);
         }
+        ProgressTextBlock = progressTextBlock;
+        _progressBar = progressBar;
         
-        _progressBar.SizeChanged += (s, e) =>
+        _progressBar.SizeChanged += (_, _) =>
         {
-            _progressBarBroder.Width = ((_progressBar.Width / DesktopScaling) + 2) * DesktopScaling;
-            _progressBarBroder.Height = ((_progressBar.Height / DesktopScaling) + 2) * DesktopScaling;
+            progressBarBroder.Width = ((_progressBar.Width / DesktopScaling) + 2) * DesktopScaling;
+            progressBarBroder.Height = ((_progressBar.Height / DesktopScaling) + 2) * DesktopScaling;
         };
         
         _dispatcherTimer = new TrackedDispatchTimer() { Interval = TimeSpan.FromSeconds(1) };
-        _dispatcherTimer.Tick += (s, e) => ProgressTextBlock.Text = $"{UtilService.FormatElapsedTimeMMSS(_dispatcherTimer.Elapsed)}";
+        _dispatcherTimer.Tick += (_, _) => ProgressTextBlock.Text = $"{UtilService.FormatElapsedTimeMMSS(_dispatcherTimer.Elapsed)}";
         _progress = Progress.Instance;
-        _progress.ProgressChanged += (sender, i) =>
+        _progress.ProgressChanged += (_, i) =>
         {
             _progressBar.Value = i;
-            _progressBarBroder.Value = i;
+            progressBarBroder.Value = i;
         };
     }
     
     /// <summary>
     /// Initializes the Logger Service and UI Sink
     /// </summary>
-    /// <exception cref="InvalidOperationException">Could not find log viewer in the UI</exception>
-    /// <exception cref="ArgumentException">Log Directory it build is invalid</exception>
+    /// <exception cref="InvalidOperationException">Could not find the log viewer in the UI</exception>
+    /// <exception cref="ArgumentException">Log Directory its build is invalid</exception>
     /// <exception cref="IOException"></exception>
     private void InitializeLogger()
     {
@@ -113,10 +114,7 @@ public partial class MainWindow : Window
         {
             _mainWindowViewModel.MainTaskProcessing = true;
             AddQueuedFilters();
-            var (success, error) = await Task.Run(() =>
-            { 
-                return _processService.StartProcess();
-            });
+            var (success, error) = await Task.Run(() => _processService.StartProcess());
             if (!success)
             {
                 Logger.Error($"Process failed: {error}");
@@ -129,7 +127,7 @@ public partial class MainWindow : Window
         finally
         {
             _dispatcherTimer.Stop();
-            string formattedTime = UtilService.FormatElapsedTime(_dispatcherTimer.Elapsed);
+            var formattedTime = UtilService.FormatElapsedTime(_dispatcherTimer.Elapsed);
             Logger.Info($"Process finished after: {formattedTime}");
             _mainWindowViewModel.MainTaskProcessing = false;
         }
@@ -137,21 +135,19 @@ public partial class MainWindow : Window
     
     private void ResourceFilterTextBox_KeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Enter && sender is TextBox textBox)
-        {
-            string text = textBox.Text?.Trim();
-            if (!string.IsNullOrEmpty(text))
-            {
-                textBox.Text = string.Empty;
-                _mainWindowViewModel.Settings.ResourceNameFilter.Add(text.ToLower());
-                _mainWindowViewModel.Settings.SaveSettings();
-            }
-        }
+        if (e.Key != Key.Enter || sender is not TextBox textBox)
+            return;
+        var text = textBox.Text?.Trim();
+        if (string.IsNullOrEmpty(text))
+            return;
+        textBox.Text = string.Empty;
+        _mainWindowViewModel.Settings.ResourceNameFilter.Add(text.ToLower());
+        _mainWindowViewModel.Settings.SaveSettings();
     }
     
     private void RemoveResourceNameFilter_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button button && button.DataContext is string item)
+        if (sender is Button { DataContext: string item })
         {
             Dispatcher.UIThread.Post(() =>
             {
@@ -170,25 +166,22 @@ public partial class MainWindow : Window
     
     private void DebugNameFilterTextBox_KeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Enter && sender is TextBox textBox)
-        {
-            string text = textBox.Text?.Trim();
-            if (!string.IsNullOrEmpty(text))
-            {
-                textBox.Text = string.Empty;
-                _mainWindowViewModel.Settings.DebugNameFilter.Add(text.ToLower());
-                _mainWindowViewModel.Settings.SaveSettings();
-            }
-        }
+        if (e.Key != Key.Enter || sender is not TextBox textBox)
+            return;
+        var text = textBox.Text?.Trim();
+        if (string.IsNullOrEmpty(text))
+            return;
+        textBox.Text = string.Empty;
+        _mainWindowViewModel.Settings.DebugNameFilter.Add(text.ToLower());
+        _mainWindowViewModel.Settings.SaveSettings();
     }
     
     private void RemoveDebugNameFilter_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button button && button.DataContext is string item)
-        {
-            _mainWindowViewModel.Settings.DebugNameFilter.Remove(item.ToLower());
-            _mainWindowViewModel.Settings.SaveSettings();
-        }
+        if (sender is not Button { DataContext: string item })
+            return;
+        _mainWindowViewModel.Settings.DebugNameFilter.Remove(item.ToLower());
+        _mainWindowViewModel.Settings.SaveSettings();
     }
     private void DebugNameFilterTextBox_GotFocus(object? sender, GotFocusEventArgs e)
     {
@@ -200,21 +193,19 @@ public partial class MainWindow : Window
 
     private void SwitchFilterModeButton_Click(object? sender, RoutedEventArgs e)
     {
-        if (sender is Button)
-        {
-            _mainWindowViewModel.Settings.FilterModeOr = !_mainWindowViewModel.Settings.FilterModeOr;
-            _mainWindowViewModel.Settings.SaveSettings();
-            _mainWindowViewModel.FilterModeOr = _mainWindowViewModel.Settings.FilterModeOr;
-        }
+        if (sender is not Button)
+            return;
+        _mainWindowViewModel.Settings.FilterModeOr = !_mainWindowViewModel.Settings.FilterModeOr;
+        _mainWindowViewModel.Settings.SaveSettings();
+        _mainWindowViewModel.FilterModeOr = _mainWindowViewModel.Settings.FilterModeOr;
     }
 
     private void ToggleFilterVisibility_Click(object? sender, RoutedEventArgs e)
     {
-        if (sender is Button)
-        {
-            _mainWindowViewModel.FilterSelectionVisibility = !_mainWindowViewModel.FilterSelectionVisibility;
-            AddQueuedFilters();
-        }
+        if (sender is not Button)
+            return;
+        _mainWindowViewModel.FilterSelectionVisibility = !_mainWindowViewModel.FilterSelectionVisibility;
+        AddQueuedFilters();
     }
     
     public void ToggleParameterVisibility_Click(object? sender, RoutedEventArgs e)
@@ -225,27 +216,27 @@ public partial class MainWindow : Window
         }
     }
     
-    private void SelectAllClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void SelectAllClick(object? sender, RoutedEventArgs e)
     {
-        for (int i = 0; i < _mainWindowViewModel.FilteredNodeTypeFilterItems.Count; i++)
+        foreach (var item in _mainWindowViewModel.FilteredNodeTypeFilterItems)
         {
-            var item = _mainWindowViewModel.FilteredNodeTypeFilterItems[i];
             var globalIndex = _mainWindowViewModel.NodeTypeFilterItems.IndexOf(item);
             _mainWindowViewModel.Settings.NodeTypeFilter[globalIndex] = true;
             item.IsChecked = true;
         }
+
         RefreshItems();
     }
 
-    private void DeselectAllClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void DeselectAllClick(object? sender, RoutedEventArgs e)
     {
-        for (int i = 0; i < _mainWindowViewModel.FilteredNodeTypeFilterItems.Count; i++)
+        foreach (var item in _mainWindowViewModel.FilteredNodeTypeFilterItems)
         {
-            var item = _mainWindowViewModel.FilteredNodeTypeFilterItems[i];
             var globalIndex = _mainWindowViewModel.NodeTypeFilterItems.IndexOf(item);
             _mainWindowViewModel.Settings.NodeTypeFilter[globalIndex] = false;
             item.IsChecked = false;
         }
+
         RefreshItems();
     }
 
@@ -262,12 +253,11 @@ public partial class MainWindow : Window
         }
     }
     
-    private void Label_Click(object sender, Avalonia.Input.PointerPressedEventArgs e)
+    private void Label_Click(object sender, PointerPressedEventArgs e)
     {
         var label = sender as Label;
-        var item = label?.DataContext as NodeTypeFilterItem;
 
-        if (item != null)
+        if (label?.DataContext is NodeTypeFilterItem item)
         {
             item.IsChecked = !item.IsChecked;
         }
@@ -319,17 +309,16 @@ public partial class MainWindow : Window
         Dispatcher.UIThread.Post(() =>
         {
             var newPos = e.Point;
-            if (WindowState == WindowState.Normal)
-            {
-                _mainWindowViewModel.Settings.WindowRecoveryState.PosX = newPos.X;
-                _mainWindowViewModel.Settings.WindowRecoveryState.PosY = newPos.Y;
-            }
+            if (WindowState != WindowState.Normal)
+                return;
+            _mainWindowViewModel.Settings.WindowRecoveryState.PosX = newPos.X;
+            _mainWindowViewModel.Settings.WindowRecoveryState.PosY = newPos.Y;
         });
     }
 
-    private bool wasMaximized { get; set; } = false;
+    private bool _wasMaximized;
     /// <summary>
-    /// Updates saved window size and sets correct size after returning from maximized state
+    /// Updates saved window size and sets the correct size after returning from maximized state
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
@@ -339,10 +328,10 @@ public partial class MainWindow : Window
         {
             var newSize = e.NewSize;
             if (WindowState == WindowState.Maximized)
-                wasMaximized = true;
+                _wasMaximized = true;
             if (WindowState == WindowState.Normal)
             {
-                if (wasMaximized)
+                if (_wasMaximized)
                 {
                     try
                     {
@@ -353,7 +342,7 @@ public partial class MainWindow : Window
                     {
                         Logger.Exception(ex, "Failed to set window size after returning from maximized state");
                     }
-                    wasMaximized = false;
+                    _wasMaximized = false;
                 }
                 else
                 {
@@ -397,7 +386,7 @@ public partial class MainWindow : Window
         var gamepath = json["CP77ExecutablePath"]?.ToString();
         if (string.IsNullOrEmpty(gamepath))
             return null;
-        gamepath = gamepath.Replace("\\bin\\x64\\Cyberpunk2077.exe", "");
+        gamepath = gamepath.Replace(@"\bin\x64\Cyberpunk2077.exe", "");
         return gamepath;
     }
     protected override async void OnOpened(EventArgs e)

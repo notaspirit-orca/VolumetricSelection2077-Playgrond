@@ -7,12 +7,6 @@ namespace VolumetricSelection2077.ViewModels;
 
 public class DialogWindowViewModel
 {
-    public DialogWindowViewModel(string title, string message, DialogButton[] buttons)
-    {
-        Title = title;
-        Message = message;
-        ButtonContents = buttons;
-    }
     public IEnumerable<DialogButton> ButtonContents { get; set; }
 
     public IEnumerable<DialogButton> PrimaryButtons => ButtonContents.Where(btn => btn.Style == DialogButtonStyling.Primary);
@@ -21,4 +15,11 @@ public class DialogWindowViewModel
     
     public string Title { get; set; }
     public string Message { get; set;  }
+    
+    public DialogWindowViewModel(string title, string message, DialogButton[] buttons)
+    {
+        Title = title;
+        Message = message;
+        ButtonContents = buttons;
+    }
 }
