@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using VolumetricSelection2077.Services;
+using VolumetricSelection2077.Views;
 
 namespace VolumetricSelection2077;
 

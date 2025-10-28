@@ -83,6 +83,36 @@ namespace VolumetricSelection2077.Views
             UpdateCacheStats();
         }
 
+        private void OpenBackupDir_Click(object sender, RoutedEventArgs e)
+        {
+            OsUtilsService.OpenFolder(_settingsViewModel.Settings.BackupDirectory);
+        }
+        
+        private void OpenCustomSelectionDir_Click(object sender, RoutedEventArgs e)
+        {
+            OsUtilsService.OpenFolder(_settingsViewModel.Settings.CustomSelectionFilePath);
+        }
+        
+        private void OpenCacheDir_Click(object sender, RoutedEventArgs e)
+        {
+            OsUtilsService.OpenFolder(_settingsViewModel.Settings.CacheDirectory);
+        }
+        
+        private void OpenOutputDir_Click(object sender, RoutedEventArgs e)
+        {
+            OsUtilsService.OpenFolder(_settingsViewModel.Settings.OutputDirectory);
+        }
+
+        private void OpenCETDir_Click(object sender, RoutedEventArgs e)
+        {
+            OsUtilsService.OpenFolder(_settingsViewModel.Settings.CETInstallLocation);
+        }
+        
+        private void OpenGameDir_Click(object sender, RoutedEventArgs e)
+        {
+            OsUtilsService.OpenFolder(_settingsViewModel.Settings.GameDirectory);
+        }
+
         private async void OnSettingsWindowClosing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
             if (_showedDialog || !_settingsViewModel.PersistentCache.CachePathChanged)
