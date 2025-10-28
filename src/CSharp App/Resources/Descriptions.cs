@@ -61,5 +61,6 @@ namespace VolumetricSelection2077.Resources
             public static string BackupDirectory { get; } = "Backup Directory";
             public static string MaxBackupFiles { get; } = "Max Backup Files";
             public static string  DestructibleMeshTreatment { get; } = "Destructible Mesh Treatment";
+            public static string Open { get; } = "Open";
         }
 }

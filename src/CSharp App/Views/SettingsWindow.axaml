@@ -118,13 +118,31 @@
                 ToolTip.Tip="{x:Static resources:ToolTips.MaxBackupFiles}"
                 VerticalAlignment="Center" />
             <!--  Second Row: Setting Control (e.g., ToggleSwitch)  -->
-            <TextBox
+            <Grid
+                ColumnDefinitions="*, Auto"
                 Grid.Column="1"
                 Grid.Row="1"
-                Margin="5"
-                Text="{Binding Settings.GameDirectory}"
-                Watermark="{x:Static resources:Watermarks.GameDirectory}"
-                x:Name="GameDirectoryTextBox" />
+                RowDefinitions="Auto">
+                <TextBox
+                    Grid.Column="0"
+                    Grid.Row="0"
+                    Margin="5"
+                    Text="{Binding Settings.GameDirectory}"
+                    Watermark="{x:Static resources:Watermarks.GameDirectory}" />
+                <Button
+                    Background="#6b82b2"
+                    Click="OpenGameDir_Click"
+                    Content="{x:Static resources:Labels.Open}"
+                    Grid.Column="1"
+                    Grid.Row="0"
+                    Margin="0,0,5,0">
+                    <Button.Styles>
+                        <Style Selector="Button:pointerover /template/ ContentPresenter">
+                            <Setter Property="Background" Value="#455472" />
+                        </Style>
+                    </Button.Styles>
+                </Button>
+            </Grid>
             <ToggleSwitch
                 Grid.Column="1"
                 Grid.Row="2"
@@ -139,19 +157,57 @@
                 Margin="5"
                 OffContent=""
                 OnContent="" />
-            <TextBox
+            <Grid
+                ColumnDefinitions="*, Auto"
                 Grid.Column="1"
                 Grid.Row="5"
                 IsVisible="{Binding AutoUpdateEnabled}"
-                Margin="5"
-                Text="{Binding Settings.CETInstallLocation}"
-                Watermark="{x:Static resources:Watermarks.CETInstallLocation}" />
-            <TextBox
+                RowDefinitions="Auto">
+                <TextBox
+                    Grid.Column="0"
+                    Grid.Row="0"
+                    Margin="5"
+                    Text="{Binding Settings.CETInstallLocation}"
+                    Watermark="{x:Static resources:Watermarks.CETInstallLocation}" />
+                <Button
+                    Background="#6b82b2"
+                    Click="OpenCETDir_Click"
+                    Content="{x:Static resources:Labels.Open}"
+                    Grid.Column="1"
+                    Grid.Row="0"
+                    Margin="0,0,5,0">
+                    <Button.Styles>
+                        <Style Selector="Button:pointerover /template/ ContentPresenter">
+                            <Setter Property="Background" Value="#455472" />
+                        </Style>
+                    </Button.Styles>
+                </Button>
+            </Grid>
+            <Grid
+                ColumnDefinitions="*, Auto"
                 Grid.Column="1"
                 Grid.Row="6"
-                Margin="5"
-                Text="{Binding Settings.OutputDirectory}"
-                Watermark="{x:Static resources:Watermarks.CustomOutputDirectory}" />
+                RowDefinitions="Auto">
+                <TextBox
+                    Grid.Column="0"
+                    Grid.Row="0"
+                    Margin="5"
+                    Text="{Binding Settings.OutputDirectory}"
+                    Watermark="{x:Static resources:Watermarks.CustomOutputDirectory}" />
+                <Button
+                    Background="#6b82b2"
+                    Click="OpenOutputDir_Click"
+                    Content="{x:Static resources:Labels.Open}"
+                    Grid.Column="1"
+                    Grid.Row="0"
+                    Margin="0,0,5,0">
+                    <Button.Styles>
+                        <Style Selector="Button:pointerover /template/ ContentPresenter">
+                            <Setter Property="Background" Value="#455472" />
+                        </Style>
+                    </Button.Styles>
+                </Button>
+            </Grid>
             <ToggleSwitch
                 Grid.Column="1"
                 Grid.Row="7"
@@ -159,12 +215,31 @@
                 Margin="5"
                 OffContent=""
                 OnContent="" />
-            <TextBox
+            <Grid
+                ColumnDefinitions="*, Auto"
                 Grid.Column="1"
                 Grid.Row="8"
-                Margin="5"
-                Text="{Binding Settings.CacheDirectory}"
-                Watermark="{x:Static resources:Watermarks.CacheDirectory}" />
+                RowDefinitions="Auto">
+                <TextBox
+                    Grid.Column="0"
+                    Grid.Row="0"
+                    Margin="5"
+                    Text="{Binding Settings.CacheDirectory}"
+                    Watermark="{x:Static resources:Watermarks.CacheDirectory}" />
+                <Button
+                    Background="#6b82b2"
+                    Click="OpenCacheDir_Click"
+                    Content="{x:Static resources:Labels.Open}"
+                    Grid.Column="1"
+                    Grid.Row="0"
+                    Margin="0,0,5,0">
+                    <Button.Styles>
+                        <Style Selector="Button:pointerover /template/ ContentPresenter">
+                            <Setter Property="Background" Value="#455472" />
+                        </Style>
+                    </Button.Styles>
+                </Button>
+            </Grid>
             <Grid Grid.Column="1" Grid.Row="9">
                 <Grid.ColumnDefinitions>*, *</Grid.ColumnDefinitions>
                 <Button
@@ -197,7 +272,7 @@
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Center"
                     IsEnabled="{Binding CacheButtonsAvailable}"
-                    Margin="5,0,0,0">
+                    Margin="5,0,5,0">
                     <Button.Styles>
                         <Style Selector="Button:pointerover /template/ ContentPresenter">
                             <Setter Property="Background" Value="DarkRed" />
@@ -244,7 +319,7 @@
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Center"
                     IsEnabled="{Binding CacheButtonsAvailable}"
-                    Margin="5,0,0,0">
+                    Margin="5,0,5,0">
                     <Button.Styles>
                         <Style Selector="Button:pointerover /template/ ContentPresenter">
                             <Setter Property="Background" Value="DarkRed" />
@@ -259,18 +334,56 @@
                         Width="30" />
                 </Grid>
             </Grid>
-            <TextBox
+            <Grid
+                ColumnDefinitions="*, Auto"
                 Grid.Column="1"
                 Grid.Row="11"
-                Margin="5"
-                Text="{Binding Settings.CustomSelectionFilePath}"
-                Watermark="{x:Static resources:Labels.CustomSelectionFilePath}" />
-            <TextBox
+                RowDefinitions="Auto">
+                <TextBox
+                    Grid.Column="0"
+                    Grid.Row="0"
+                    Margin="5"
+                    Text="{Binding Settings.CustomSelectionFilePath}"
+                    Watermark="{x:Static resources:Labels.CustomSelectionFilePath}" />
+                <Button
+                    Background="#6b82b2"
+                    Click="OpenCustomSelectionDir_Click"
+                    Content="{x:Static resources:Labels.Open}"
+                    Grid.Column="1"
+                    Grid.Row="0"
+                    Margin="0,0,5,0">
+                    <Button.Styles>
+                        <Style Selector="Button:pointerover /template/ ContentPresenter">
+                            <Setter Property="Background" Value="#455472" />
+                        </Style>
+                    </Button.Styles>
+                </Button>
+            </Grid>
+            <Grid
+                ColumnDefinitions="*, Auto"
                 Grid.Column="1"
                 Grid.Row="12"
-                Margin="5"
-                Text="{Binding Settings.BackupDirectory}"
-                Watermark="{x:Static resources:Labels.BackupDirectory}" />
+                RowDefinitions="Auto">
+                <TextBox
+                    Grid.Column="0"
+                    Grid.Row="0"
+                    Margin="5"
+                    Text="{Binding Settings.BackupDirectory}"
+                    Watermark="{x:Static resources:Labels.BackupDirectory}" />
+                <Button
+                    Background="#6b82b2"
+                    Click="OpenBackupDir_Click"
+                    Content="{x:Static resources:Labels.Open}"
+                    Grid.Column="1"
+                    Grid.Row="0"
+                    Margin="0,0,5,0">
+                    <Button.Styles>
+                        <Style Selector="Button:pointerover /template/ ContentPresenter">
+                            <Setter Property="Background" Value="#455472" />
+                        </Style>
+                    </Button.Styles>
+                </Button>
+            </Grid>
             <controls:Int32TextBox
                 Grid.Column="1"
                 Grid.Row="13"
