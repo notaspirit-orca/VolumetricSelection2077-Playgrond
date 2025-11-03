@@ -10,6 +10,7 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:avalonia="clr-namespace:LoadingIndicators.Avalonia;assembly=LoadingIndicators.Avalonia"
     xmlns:controls="clr-namespace:VolumetricSelection2077.Controls"
+    xmlns:fui="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
     xmlns:local="clr-namespace:VolumetricSelection2077"
     xmlns:resources="clr-namespace:VolumetricSelection2077.Resources"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
@@ -132,10 +133,11 @@
                 <Button
                     Background="#6b82b2"
                     Click="OpenGameDir_Click"
-                    Content="{x:Static resources:Labels.Open}"
                     Grid.Column="1"
                     Grid.Row="0"
-                    Margin="0,0,5,0">
+                    Margin="0,5,5,5"
+                    VerticalAlignment="Stretch">
+                    <fui:SymbolIcon Symbol="OpenFolder" />
                     <Button.Styles>
                         <Style Selector="Button:pointerover /template/ ContentPresenter">
                             <Setter Property="Background" Value="#455472" />
@@ -172,10 +174,11 @@
                 <Button
                     Background="#6b82b2"
                     Click="OpenCETDir_Click"
-                    Content="{x:Static resources:Labels.Open}"
                     Grid.Column="1"
                     Grid.Row="0"
-                    Margin="0,0,5,0">
+                    Margin="0,5,5,5"
+                    VerticalAlignment="Stretch">
+                    <fui:SymbolIcon Symbol="OpenFolder" />
                     <Button.Styles>
                         <Style Selector="Button:pointerover /template/ ContentPresenter">
                             <Setter Property="Background" Value="#455472" />
@@ -197,10 +200,11 @@
                 <Button
                     Background="#6b82b2"
                     Click="OpenOutputDir_Click"
-                    Content="{x:Static resources:Labels.Open}"
                     Grid.Column="1"
                     Grid.Row="0"
-                    Margin="0,0,5,0">
+                    Margin="0,5,5,5"
+                    VerticalAlignment="Stretch">
+                    <fui:SymbolIcon Symbol="OpenFolder" />
                     <Button.Styles>
                         <Style Selector="Button:pointerover /template/ ContentPresenter">
                             <Setter Property="Background" Value="#455472" />
@@ -229,10 +233,11 @@
                 <Button
                     Background="#6b82b2"
                     Click="OpenCacheDir_Click"
-                    Content="{x:Static resources:Labels.Open}"
                     Grid.Column="1"
                     Grid.Row="0"
-                    Margin="0,0,5,0">
+                    Margin="0,5,5,5"
+                    VerticalAlignment="Stretch">
+                    <fui:SymbolIcon Symbol="OpenFolder" />
                     <Button.Styles>
                         <Style Selector="Button:pointerover /template/ ContentPresenter">
                             <Setter Property="Background" Value="#455472" />
@@ -348,10 +353,11 @@
                 <Button
                     Background="#6b82b2"
                     Click="OpenCustomSelectionDir_Click"
-                    Content="{x:Static resources:Labels.Open}"
                     Grid.Column="1"
                     Grid.Row="0"
-                    Margin="0,0,5,0">
+                    Margin="0,5,5,5"
+                    VerticalAlignment="Stretch">
+                    <fui:SymbolIcon Symbol="OpenFolder" />
                     <Button.Styles>
                         <Style Selector="Button:pointerover /template/ ContentPresenter">
                             <Setter Property="Background" Value="#455472" />
@@ -373,10 +379,11 @@
                 <Button
                     Background="#6b82b2"
                     Click="OpenBackupDir_Click"
-                    Content="{x:Static resources:Labels.Open}"
                     Grid.Column="1"
                     Grid.Row="0"
-                    Margin="0,0,5,0">
+                    Margin="0,5,5,5"
+                    VerticalAlignment="Stretch">
+                    <fui:SymbolIcon Symbol="OpenFolder" />
                     <Button.Styles>
                         <Style Selector="Button:pointerover /template/ ContentPresenter">
                             <Setter Property="Background" Value="#455472" />

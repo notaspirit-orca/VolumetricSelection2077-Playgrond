@@ -360,46 +360,20 @@
             <Grid Grid.Row="6" Margin="5">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <Button
-                    Background="#ad0002"
-                    Click="ClearLogButton_Click"
-                    Grid.Column="0"
-                    Height="24"
-                    VerticalAlignment="Center"
-                    Width="65">
-                    <Button.Styles>
-                        <Style Selector="Button:pointerover /template/ ContentPresenter">
-                            <Setter Property="Background" Value="DarkRed" />
-                        </Style>
-                    </Button.Styles>
-                </Button>
-                <Grid Grid.Column="0" Margin="-1,5,5,5">
-                    <Grid.ColumnDefinitions>65</Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>24</Grid.RowDefinitions>
-                    <TextBlock
-                        FontSize="10"
-                        Grid.Column="0"
-                        Grid.Row="0"
-                        HorizontalAlignment="Center"
-                        IsHitTestVisible="False"
-                        Text="{x:Static resources:Labels.ClearLog}"
-                        VerticalAlignment="Center" />
-                </Grid>
                 <TextBlock
-                    Grid.Column="1"
+                    Grid.Column="0"
                     Margin="5"
                     Name="TimerTextBlock"
                     Text="00:00"
                     VerticalAlignment="Center" />
                 <ProgressBar
                     CornerRadius="2"
-                    Grid.Column="2"
+                    Grid.Column="1"
                     Height="20"
                     Margin="1,6,6,6"
                     Maximum="1000"
@@ -416,7 +390,7 @@
                 </ProgressBar>
                 <ProgressBar
                     CornerRadius="3"
-                    Grid.Column="2"
+                    Grid.Column="1"
                     Margin="0,5,5,5"
                     Maximum="1000"
                     Minimum="0"
@@ -434,7 +408,7 @@
                     Background="#6b82b2"
                     Click="SettingsButton_Click"
                     Content="{x:Static resources:Labels.Settings}"
-                    Grid.Column="3"
+                    Grid.Column="2"
                     IsEnabled="{Binding ButtonsAvailable}">
                     <Button.Styles>
                         <Style Selector="Button:pointerover /template/ ContentPresenter">
@@ -442,7 +416,7 @@
                         </Style>
                     </Button.Styles>
                 </Button>
-                <Grid Grid.Column="3" IsVisible="{Binding SettingsOpen}">
+                <Grid Grid.Column="2" IsVisible="{Binding SettingsOpen}">
                     <li:LoadingIndicator
                         Foreground="White"
                         Height="30"
@@ -453,7 +427,7 @@
                     Background="#6b82b2"
                     Click="DebugWindowButton_Click"
                     Content="{x:Static resources:Labels.DebugMenu}"
-                    Grid.Column="4"
+                    Grid.Column="3"
                     IsEnabled="{Binding DebugWindowButtonEnabled}"
                     IsVisible="{Binding Settings.DebugMode}"
                     Margin="5,0,0,0">
@@ -463,7 +437,7 @@
                         </Style>
                     </Button.Styles>
                 </Button>
-                <Grid Grid.Column="4" IsVisible="{Binding DebugWindowButtonSpinnerEnabled}">
+                <Grid Grid.Column="3" IsVisible="{Binding DebugWindowButtonSpinnerEnabled}">
                     <li:LoadingIndicator
                         Foreground="White"
                         Height="30"
@@ -486,7 +460,7 @@
                     Background="#5755d9"
                     Click="FindSelectedButton_Click"
                     Content="{x:Static resources:Labels.FindSelected}"
-                    Grid.Column="5"
+                    Grid.Column="4"
                     IsEnabled="{Binding MainTaskAvailable}"
                     Margin="5,0,0,0">
                     <Button.Styles>
@@ -495,7 +469,7 @@
                         </Style>
                     </Button.Styles>
                 </Button>
-                <Grid Grid.Column="5" IsVisible="{Binding MainTaskProcessing}">
+                <Grid Grid.Column="4" IsVisible="{Binding MainTaskProcessing}">
                     <li:LoadingIndicator
                         Foreground="White"
                         Height="30"
@@ -506,7 +480,7 @@
             <ContentControl Grid.Row="7" x:Name="SettingsContent" />
             <views:LogViewer
                 Grid.Row="7"
-                Margin="5"
+                Margin="5,0,5,5"
                 x:Name="LogViewer" />
             <TextBlock
                 Background="#0e1117"
