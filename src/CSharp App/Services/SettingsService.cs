@@ -47,6 +47,7 @@ public class SettingsService
         CustomSelectionFilePath = "";
         BackupDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VolumetricSelection2077", "OutputBackup");
         MaxBackupFiles = 10;
+        AutoScrollLogViewer = true;
     }
     
     public static SettingsService Instance
@@ -106,7 +107,8 @@ public class SettingsService
     public string BackupDirectory { get; set; }
     public SaveFileFormat SaveFileFormat { get; set; }
     public int MaxBackupFiles { get; set; }
-    
+    public bool AutoScrollLogViewer { get; set; }
+    public string LogDirectory { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VolumetricSelection2077", "Logs");
     /// <summary>
     /// Loads the settings or creates a new settings file if it doesn't exist
     /// </summary>
@@ -179,7 +181,7 @@ public class SettingsService
                 CustomSelectionFilePath = j.Value<string>(nameof(CustomSelectionFilePath)) ?? CustomSelectionFilePath;
                 BackupDirectory = j.Value<string>(nameof(BackupDirectory)) ?? BackupDirectory;
                 MaxBackupFiles = j.Value<int?>(nameof(MaxBackupFiles)) ?? MaxBackupFiles;
-
+                AutoScrollLogViewer = j.Value<bool?>(nameof(AutoScrollLogViewer)) ?? AutoScrollLogViewer;
             }
             catch (Exception ex)
             {

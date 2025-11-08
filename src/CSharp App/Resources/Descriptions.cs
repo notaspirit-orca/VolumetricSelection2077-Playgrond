@@ -47,7 +47,6 @@ namespace VolumetricSelection2077.Resources
             public static string FindSelected　{ get; } = "Find Selected";
             public static string Benchmark { get; } = "Benchmark";
             public static string DebugMenu { get; } = "Debug Menu";
-            public static string ClearLog { get; } = "Clear Log";
             public static string FilterCollapseButton { get; } = "Filters";
             public static string ParametersCollapseButton { get; } = "Optional Parameters";
             public static string SaveAsYaml { get; } = "Output Format";
@@ -61,6 +60,6 @@ namespace VolumetricSelection2077.Resources
             public static string BackupDirectory { get; } = "Backup Directory";
             public static string MaxBackupFiles { get; } = "Max Backup Files";
             public static string  DestructibleMeshTreatment { get; } = "Destructible Mesh Treatment";
-            public static string Open { get; } = "Open";
+            public static string AutoScroll { get; } = "Auto Scroll";
         }
 }

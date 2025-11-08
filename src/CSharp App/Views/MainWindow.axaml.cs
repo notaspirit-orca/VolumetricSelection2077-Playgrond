@@ -28,6 +28,8 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        DataContext = new MainWindowViewModel();
+        _mainWindowViewModel = (DataContext as MainWindowViewModel)!;
         try
         {
             InitializeLogger();
@@ -36,8 +38,6 @@ public partial class MainWindow : Window
         {
             Console.WriteLine(ex);
         }
-        DataContext = new MainWindowViewModel();
-        _mainWindowViewModel = (DataContext as MainWindowViewModel)!;
         _processService = new ProcessDispatcher(new DialogService(this));
         Closed += OnMainWindowClosed;
         
@@ -78,9 +78,7 @@ public partial class MainWindow : Window
     /// <exception cref="IOException"></exception>
     private void InitializeLogger()
     {
-        var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var logDirectory = Path.Combine(appDataPath, "VolumetricSelection2077", "Logs");
-        Directory.CreateDirectory(logDirectory);
+        Directory.CreateDirectory(_mainWindowViewModel.Settings.LogDirectory);
 
         var logViewer = this.FindControl<LogViewer>("LogViewer");
         if (logViewer == null)
@@ -88,7 +86,7 @@ public partial class MainWindow : Window
             throw new InvalidOperationException("LogViewer control not found");
         }
 
-        Logger.Initialize(logDirectory);
+        Logger.Initialize(_mainWindowViewModel.Settings.LogDirectory);
         Logger.AddSink(new LogViewerSink(logViewer, "[{Timestamp:yyyy-MM-dd HH:mm:ss}] {Message:lj}{NewLine}{Exception}"));
     }
     
@@ -99,11 +97,6 @@ public partial class MainWindow : Window
         var settingsWindow = new SettingsWindow();
         await settingsWindow.ShowDialog(this);
         _mainWindowViewModel.SettingsOpen = false;
-    }
-    private void ClearLogButton_Click(object? sender, RoutedEventArgs e)
-    {
-        var logViewer = this.FindControl<LogViewer>("LogViewer");
-        logViewer?.ClearLog();
     }
 
     private async void FindSelectedButton_Click(object? sender, RoutedEventArgs e)
