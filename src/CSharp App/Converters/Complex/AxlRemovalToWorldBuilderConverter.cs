@@ -5,6 +5,7 @@ using DynamicData;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using VolumetricSelection2077.Enums;
+using VolumetricSelection2077.Enums.ExperimentalSettingsEnum;
 using VolumetricSelection2077.Models;
 using VolumetricSelection2077.Models.WorldBuilder.Editor;
 using VolumetricSelection2077.Models.WorldBuilder.Spawn.Entity;
@@ -556,6 +557,24 @@ public class AxlRemovalToWorldBuilderConverter
                         }
                     });
                 }
+                break;
+            case worldPrefabProxyMeshNode prefabProxyMeshNode:
+                var spawnablePrefabProxyMeshNode = new SpawnableElement
+                {
+                    Name = GetSpawnableName(prefabProxyMeshNode),
+                    Spawnable = new Mesh()
+                };
+
+                if (_settings.ProxyMeshTreatment == ProxyMeshTreatment.ProxyMesh)
+                {
+                    spawnablePrefabProxyMeshNode.Spawnable = new ProxyMesh()
+                    {
+                        NearAutoHideDistance = prefabProxyMeshNode.NearAutoHideDistance
+                    };
+                }
+                
+                PopulateBaseMesh(ref spawnablePrefabProxyMeshNode, prefabProxyMeshNode, nodeDataEntry);
+                spawnableElements.Add(spawnablePrefabProxyMeshNode);
                 break;
             case worldMeshNode meshNode:
                 if ((string?)meshNode.Mesh.DepotPath is null)
