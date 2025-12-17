@@ -1,9 +1,11 @@
 using System;
-using System.ComponentModel;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using CommunityToolkit.Mvvm.ComponentModel;
 using VolumetricSelection2077.Models;
 using VolumetricSelection2077.Resources;
 using VolumetricSelection2077.Services;
@@ -11,11 +13,15 @@ using VolumetricSelection2077.Views;
 
 namespace VolumetricSelection2077.ViewModels
 {
-    public class SettingsViewModel : INotifyPropertyChanged
+    public partial class SettingsViewModel : ObservableObject
     { 
         private CacheStats _cacheStats;
         private bool _cacheWorking;
-        public SettingsService Settings { get; }
+        
+        public List<Enums.ExperimentalSettingsEnum.ProxyMeshTreatment> ProxyMeshTreatmentOptions { get; set; }
+
+        [ObservableProperty] 
+        private SettingsService _settings;
         public SettingsViewPersistentCache PersistentCache { get; }
         public CacheStats CacheStats
         {
@@ -93,13 +99,9 @@ namespace VolumetricSelection2077.ViewModels
                 Logger.Exception(ex, $"Failed to load Settings Icon!");
                 SettingsIcon = new WriteableBitmap(new PixelSize(1,1), new Vector(1,1), PixelFormat.Bgra8888, AlphaFormat.Premul);
             }
-        }
-        
-        public event PropertyChangedEventHandler? PropertyChanged;
-        
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+            ProxyMeshTreatmentOptions = new(Enum.GetValues(typeof(Enums.ExperimentalSettingsEnum.ProxyMeshTreatment))
+                .Cast<Enums.ExperimentalSettingsEnum.ProxyMeshTreatment>());
         }
    }
 }

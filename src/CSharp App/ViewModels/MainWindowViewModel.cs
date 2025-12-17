@@ -6,6 +6,7 @@ using System.Linq;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using CommunityToolkit.Mvvm.ComponentModel;
 using VolumetricSelection2077.Resources;
 using VolumetricSelection2077.Services;
 using VolumetricSelection2077.Views;
@@ -14,7 +15,7 @@ using VolumetricSelection2077.Enums;
 
 namespace VolumetricSelection2077.ViewModels
 {
-    public class MainWindowViewModel : INotifyPropertyChanged
+    public partial class MainWindowViewModel : ObservableObject
     {
         private bool _isProcessing;
         private bool _isMainTaskProcessing;
@@ -26,8 +27,9 @@ namespace VolumetricSelection2077.ViewModels
         private ObservableCollection<NodeTypeFilterItem> _filteredNodeTypeFilterItems;
         private int _checkedCount;
         private readonly ObservableCollection<string> _resourceNameFilter;
-        
-        public SettingsService Settings { get; set; }
+
+        [ObservableProperty]
+        private SettingsService _settings;
         public Bitmap VS2077Icon { get; set; }
         public bool IsProcessing
         {
@@ -329,12 +331,6 @@ namespace VolumetricSelection2077.ViewModels
                 return;
             var globalIndex = NodeTypeFilterItems.IndexOf(item1);
             Settings.NodeTypeFilter[globalIndex] = item1.IsChecked;
-        }
-        
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

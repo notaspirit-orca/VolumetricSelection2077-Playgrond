@@ -1,10 +1,13 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json.Nodes;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using VolumetricSelection2077.Enums;
@@ -13,7 +16,7 @@ using VolumetricSelection2077.Models;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace VolumetricSelection2077.Services;
-public class SettingsService
+public partial class SettingsService : ObservableObject
 {
     private static SettingsService? _instance;
     private static readonly object _lock = new object();
@@ -72,7 +75,6 @@ public class SettingsService
     public SaveFileLocation SaveFileLocation { get; set; }
     public string OutputDirectory { get; set; }
     public string OutputFilename { get; set; }
-    public bool DebugMode { get; set; }
     public bool SupportModdedResources { get; set; }
     
     [JsonIgnore]
@@ -109,6 +111,15 @@ public class SettingsService
     public int MaxBackupFiles { get; set; }
     public bool AutoScrollLogViewer { get; set; }
     public string LogDirectory { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VolumetricSelection2077", "Logs");
+
+    #region ExperimentalSettings
+
+    [ObservableProperty]
+    private bool _debugMode;
+    public Enums.ExperimentalSettingsEnum.ProxyMeshTreatment ProxyMeshTreatment { get; set; } = Enums.ExperimentalSettingsEnum.ProxyMeshTreatment.RegularMesh;
+
+    #endregion
+    
     /// <summary>
     /// Loads the settings or creates a new settings file if it doesn't exist
     /// </summary>
@@ -146,7 +157,6 @@ public class SettingsService
                     OutputDirectory = tempOutputDirectory;
 
                 OutputFilename = j.Value<string>(nameof(OutputFilename)) ?? OutputFilename;
-                DebugMode = j.Value<bool?>(nameof(DebugMode)) ?? DebugMode;
                 
                 NodeTypeFilterProxy = j[nameof(NodeTypeFilter)]?.ToObject<bool[]>() ?? NodeTypeFilterProxy;
                 
@@ -182,6 +192,10 @@ public class SettingsService
                 BackupDirectory = j.Value<string>(nameof(BackupDirectory)) ?? BackupDirectory;
                 MaxBackupFiles = j.Value<int?>(nameof(MaxBackupFiles)) ?? MaxBackupFiles;
                 AutoScrollLogViewer = j.Value<bool?>(nameof(AutoScrollLogViewer)) ?? AutoScrollLogViewer;
+                
+                DebugMode = j.Value<bool?>(nameof(DebugMode)) ?? DebugMode;
+                ProxyMeshTreatment = (Enums.ExperimentalSettingsEnum.ProxyMeshTreatment?)j.Value<long?>(nameof(ProxyMeshTreatment)) ?? ProxyMeshTreatment;
+                
             }
             catch (Exception ex)
             {
