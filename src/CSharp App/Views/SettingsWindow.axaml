@@ -454,7 +454,7 @@
                             Grid.Row="3"
                             HorizontalAlignment="Left"
                             Margin="5"
-                            Text="Enables export to World Builder as ProxyMesh, requires WorldBuilder from main branch at commit f02ad58 or later."
+                            Text="Enables export to World Builder as ProxyMesh. Requires WorldBuilder from the main branch at commit f02ad58 (Nov 15th) or later."
                             TextWrapping="Wrap"
                             ToolTip.Tip="{x:Static resources:ToolTips.GameDirectory}"
                             VerticalAlignment="Center" />
