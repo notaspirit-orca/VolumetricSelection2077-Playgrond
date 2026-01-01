@@ -114,6 +114,23 @@ public class AxlRemovalToWorldBuilderConverter
         
         switch (node)
         {
+            case worldStaticSoundEmitterNode soundEmitterNode:
+                var spawnableSound = new SpawnableElement
+                {
+                    Name = GetSpawnableName(soundEmitterNode),
+                    Spawnable = new Audio
+                    {
+                        Radius = soundEmitterNode.Radius,
+                        EmitterMetadataName = soundEmitterNode.EmitterMetadataName,
+                        ResourcePath = soundEmitterNode.Settings.Chunk?.EventsOnActive.Count > 0 ? soundEmitterNode.Settings.Chunk?.EventsOnActive[0].Event : "",
+                        UseDoppler = soundEmitterNode.UseDoppler,
+                        UsePhysicsObstruction = soundEmitterNode.UsePhysicsObstruction,
+                    }
+                };
+                
+                PopulateSpawnable(ref spawnableSound, nodeDataEntry);
+                spawnableElements.Add(spawnableSound);
+                break;
             case worldStaticLightNode lightNode:
                 var spawnableLight = new SpawnableElement
                 {
