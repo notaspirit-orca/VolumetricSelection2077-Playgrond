@@ -1,0 +1,137 @@
+name: Bump-Version-And-Draft-Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      new_version:
+        description: "New version"
+        required: true
+      bump_cache:
+        description: "Bump Cache Version?"
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Bump C# App
+        run: |
+          version="${{ github.event.inputs.new_version }}"
+          base_version="${version%%-*}"
+          sed -i "s|<Version>.*</Version>|<Version>"$base_version"</Version>|" "src/CSharp App/VolumetricSelection2077.csproj"
+          sed -i "s|<FileVersion>.*</FileVersion>|<FileVersion>"$base_version"</FileVersion>|" "src/CSharp App/VolumetricSelection2077.csproj"
+          sed -i "s|<InformationalVersion>.*</InformationalVersion>|<InformationalVersion>"$version"</InformationalVersion>|" "src/CSharp App/VolumetricSelection2077.csproj"
+
+      - name: Bump Cache Version
+        run: |
+          if [ ${{ github.event.inputs.bump_cache }} = true ]; then
+            sed -i "s|public string MinimumCacheVersion { get; } = \".*\";|public string MinimumCacheVersion { get; } = \"${{ github.event.inputs.new_version }}\";|" "src/CSharp App/Services/SettingsService.cs"
+          fi
+
+      - name: Bump CET Mod
+        run: |
+          version="${{ github.event.inputs.new_version }}"
+          base_version="${version%%-*}"
+          sed -i "s|local versionString = \".*\"|local versionString = \"${{ github.event.inputs.new_version }}\"|" "src/CET_Mod/bin/x64/plugins/cyber_engine_tweaks/mods/VolumetricSelection2077/modules/VSGui.lua"
+
+      - name: Commit and Push to Main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Bump version to ${{ github.event.inputs.new_version }}" || echo "No changes to commit"
+          if git rev-parse -q --verify "refs/tags/${{ github.event.inputs.new_version }}" >/dev/null; then
+            echo "Tag ${{ github.event.inputs.new_version }} already exists."
+          else
+            git tag -a "${{ github.event.inputs.new_version }}" -m "Release ${{ github.event.inputs.new_version }}"
+          fi
+          git push origin HEAD:main
+
+  build-and-release:
+    needs: bump
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Update ISS Version
+        run: |
+          $version = "${{ github.event.inputs.new_version }}"
+          $issContent = Get-Content "build-app.iss" -Raw
+          $issContent = $issContent -replace "REPLACE_WITH_VERSION_NUMBER", $version
+          $issContent | Set-Content "build-app.iss"
+
+      - name: Clean and Publish C# App
+        run: |
+          dotnet clean
+          dotnet publish -c Release -r win-x64 --self-contained false -o ../../temp_publish
+        working-directory: "src/CSharp App"
+
+      - name: Download Inno Setup
+        run: |
+          Invoke-WebRequest -Uri "https://jrsoftware.org/download.php/is.exe" -OutFile "inno-setup.exe"
+          Start-Process -FilePath "inno-setup.exe" -ArgumentList "/VERYSILENT", "/DIR=C:\InnoSetup" -Wait
+
+      - name: Ensure Build Directory Exists
+        run: |
+          New-Item -ItemType Directory -Path "build" -Force
+
+      - name: Create Installer
+        run: |
+          C:\InnoSetup\ISCC.exe "build-app.iss"
+
+      - name: Create Version Directory
+        run: |
+          New-Item -ItemType Directory -Path "${{ github.event.inputs.new_version }}" -Force
+
+      - name: Create Portable ZIP
+        run: |
+          Compress-Archive -Path "temp_publish\*" -DestinationPath "${{ github.event.inputs.new_version }}/VS2077-portable-${{ github.event.inputs.new_version }}.zip"
+
+      - name: Create CET Mod ZIP
+        run: |
+          Compress-Archive -Path "src/CET_Mod\*" -DestinationPath "${{ github.event.inputs.new_version }}/VS2077-cet-${{ github.event.inputs.new_version }}.zip"
+
+      - name: Find Installer
+        id: find_installer
+        run: |
+          $installer = Get-ChildItem -Path "build" -Filter "VS2077-installer-*.exe" -Recurse | Select-Object -First 1
+          if (-not $installer) {
+            Write-Error "Installer exe not found under build/. Check Inno Setup output directory and filename."
+            exit 1
+          }
+          # Convert to a workspace-relative POSIX path so gh-release globbing works on Windows
+          $rel = Resolve-Path -LiteralPath $installer.FullName -Relative
+          $rel = $rel -replace "\\", "/"
+          $rel = $rel -replace "^\./", ""
+          Write-Host "Resolved installer path for release: $rel"
+          echo "installer_path=$rel" >> $env:GITHUB_OUTPUT
+
+      - name: Create Draft Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: "${{ github.event.inputs.new_version }}"
+          name: "Release ${{ github.event.inputs.new_version }}"
+          draft: true
+          prerelease: false
+          files: |
+            ${{ steps.find_installer.outputs.installer_path }}
+            ${{ github.event.inputs.new_version }}/VS2077-portable-${{ github.event.inputs.new_version }}.zip
+            ${{ github.event.inputs.new_version }}/VS2077-cet-${{ github.event.inputs.new_version }}.zip
