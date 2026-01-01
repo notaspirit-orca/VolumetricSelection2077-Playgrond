@@ -431,7 +431,7 @@
                             Grid.Row="1"
                             HorizontalAlignment="Left"
                             Margin="5"
-                            Text="Enables a hidden menu with some debug and testing functionality. No guarantee is provided for functionality debug methods."
+                            Text="Enables a hidden menu with some debug and testing functionality. No guarantee is provided for the functionality of debug methods."
                             TextWrapping="Wrap"
                             VerticalAlignment="Center" />
 
@@ -456,7 +456,6 @@
                             Margin="5"
                             Text="Enables export to World Builder as ProxyMesh. Requires WorldBuilder from the main branch at commit f02ad58 (Nov 15th) or later."
                             TextWrapping="Wrap"
-                            ToolTip.Tip="{x:Static resources:ToolTips.GameDirectory}"
                             VerticalAlignment="Center" />
                     </Grid>
                 </TabItem>
