@@ -22,7 +22,7 @@ namespace VolumetricSelection2077.Services
         private readonly SettingsService _settingsService;
         private readonly CacheService _cacheService;
         private readonly GameFileService _gameFileService;
-        private static readonly char[] InvalidCharacters = Path.GetInvalidPathChars().Concat(new[] { '?', '*', '"', '<', '>', '|', '/' }).Distinct().ToArray();
+        private static readonly char[] InvalidCharacters = Path.GetInvalidPathChars().Concat(new[] { '?', '*', '"', '<', '>', '|' }).Distinct().ToArray();
 
         public ValidationService()
         {
