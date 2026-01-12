@@ -1,10 +1,12 @@
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace VolumetricSelection2077.Services;
 
 /// <summary>
-/// Currently supports Windows, Linux and MacOS, created to gather all the OS specific code in one place (except UpdateService)
+/// Currently supports Windows and Linux, created to gather all the OS specific code in one place (except UpdateService)
 /// </summary>
 public class OsUtilsService
 {
@@ -16,8 +18,25 @@ public class OsUtilsService
         if (OperatingSystem.IsWindows())
             Process.Start(new ProcessStartInfo("explorer.exe", $"\"{path}\"") { UseShellExecute = true });
         else if (OperatingSystem.IsLinux())
-            Process.Start(new ProcessStartInfo("xdg-open", path) { UseShellExecute = true });
-        else if  (OperatingSystem.IsMacOS())
-            Process.Start(new ProcessStartInfo("open", path) { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo("xdg-open", $"\"{path}\"") { UseShellExecute = true });
+    }
+
+    public static void RestartApp()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Process.Start(new ProcessStartInfo(Path.Combine(AppContext.BaseDirectory, "VolumetricSelection2077.exe")));
+        }
+        else if (OperatingSystem.IsLinux())
+        {
+            var execPath = Path.Combine(AppContext.BaseDirectory, "VolumetricSelection2077");
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "/bin/bash",
+                Arguments = $"-c \"nohup '{execPath}' > /dev/null 2>&1 &\"",
+                UseShellExecute = false
+            });
+        }
+        Environment.Exit(0);
     }
 }
