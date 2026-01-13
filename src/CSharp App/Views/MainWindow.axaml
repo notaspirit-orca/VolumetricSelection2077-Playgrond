@@ -3,10 +3,9 @@
     Icon="../assets/redCube.ico"
     Title="VolumetricSelection2077"
     mc:Ignorable="d"
-    x:Class="VolumetricSelection2077.MainWindow"
+    x:Class="VolumetricSelection2077.Views.MainWindow"
     x:DataType="viewModels:MainWindowViewModel"
     xmlns="https://github.com/avaloniaui"
-    xmlns:avalonia="clr-namespace:LoadingIndicators.Avalonia;assembly=LoadingIndicators.Avalonia"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:li="using:LoadingIndicators.Avalonia"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -196,17 +195,16 @@
                         <Button.Flyout>
                             <Flyout>
                                 <StackPanel>
-                                    <StackPanel
-                                        HorizontalAlignment="Center"
-                                        Margin="0,0,0,5"
-                                        Orientation="Horizontal">
+                                    <Grid HorizontalAlignment="Stretch" Margin="0,0,0,5">
+                                        <Grid.ColumnDefinitions>*,*</Grid.ColumnDefinitions>
                                         <Button
                                             Background="#6b82b2"
                                             Click="SelectAllClick"
                                             Content="{x:Static resources:Labels.SelectAll}"
+                                            Grid.Column="0"
+                                            HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Center"
-                                            Margin="5"
-                                            Width="100">
+                                            Margin="0,5,0,5">
                                             <Button.Styles>
                                                 <Style Selector="Button:pointerover /template/ ContentPresenter">
                                                     <Setter Property="Background" Value="#455472" />
@@ -217,16 +215,17 @@
                                             Background="#6b82b2"
                                             Click="DeselectAllClick"
                                             Content="{x:Static resources:Labels.DeselectAll}"
+                                            Grid.Column="1"
+                                            HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Center"
-                                            Margin="5"
-                                            Width="100">
+                                            Margin="5,5,0,5">
                                             <Button.Styles>
                                                 <Style Selector="Button:pointerover /template/ ContentPresenter">
                                                     <Setter Property="Background" Value="#455472" />
                                                 </Style>
                                             </Button.Styles>
                                         </Button>
-                                    </StackPanel>
+                                    </Grid>
                                     <TextBox
                                         HorizontalAlignment="Stretch"
                                         Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
@@ -307,14 +306,14 @@
                         Text="{x:Static resources:Labels.SaveToArchiveMods}"
                         ToolTip.Tip="{x:Static resources:ToolTips.SaveToArchiveMods}"
                         VerticalAlignment="Center" />
-                    <ToggleSwitch
+                    <ComboBox
                         Grid.Column="1"
                         Grid.Row="1"
-                        IsChecked="{Binding Settings.SaveToArchiveMods}"
+                        HorizontalAlignment="Stretch"
                         IsVisible="{Binding ParameterSelectionVisibility}"
+                        ItemsSource="{Binding SaveFileLocations}"
                         Margin="5"
-                        OffContent="Output Directory"
-                        OnContent="Game Directory" />
+                        SelectedItem="{Binding SelectedSaveFileLocation, Mode=TwoWay}" />
                 </Grid>
                 <Grid Grid.Column="2">
                     <Grid.ColumnDefinitions>
@@ -339,51 +338,42 @@
                         ItemsSource="{Binding SaveFileModes}"
                         Margin="5"
                         SelectedItem="{Binding SelectedSaveFileMode, Mode=TwoWay}" />
+                    <TextBlock
+                        Grid.Column="0"
+                        Grid.Row="1"
+                        HorizontalAlignment="Left"
+                        IsVisible="{Binding ParameterSelectionVisibility}"
+                        Margin="5"
+                        Text="{x:Static resources:Labels.DestructibleMeshTreatment}"
+                        ToolTip.Tip="{x:Static resources:ToolTips.DestructibleMeshTreatment}"
+                        VerticalAlignment="Center" />
+                    <ComboBox
+                        Grid.Column="1"
+                        Grid.Row="1"
+                        HorizontalAlignment="Stretch"
+                        IsVisible="{Binding ParameterSelectionVisibility}"
+                        ItemsSource="{Binding DestructibleMeshTreatments}"
+                        Margin="5"
+                        SelectedItem="{Binding SelectedDestructibleMeshTreatment, Mode=TwoWay}" />
                 </Grid>
             </Grid>
             <Grid Grid.Row="6" Margin="5">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <Button
-                    Background="#ad0002"
-                    Click="ClearLogButton_Click"
-                    Grid.Column="0"
-                    Height="24"
-                    VerticalAlignment="Center"
-                    Width="65">
-                    <Button.Styles>
-                        <Style Selector="Button:pointerover /template/ ContentPresenter">
-                            <Setter Property="Background" Value="DarkRed" />
-                        </Style>
-                    </Button.Styles>
-                </Button>
-                <Grid Grid.Column="0" Margin="-1,5,5,5">
-                    <Grid.ColumnDefinitions>65</Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>24</Grid.RowDefinitions>
-                    <TextBlock
-                        FontSize="10"
-                        Grid.Column="0"
-                        Grid.Row="0"
-                        HorizontalAlignment="Center"
-                        IsHitTestVisible="False"
-                        Text="{x:Static resources:Labels.ClearLog}"
-                        VerticalAlignment="Center" />
-                </Grid>
                 <TextBlock
-                    Grid.Column="1"
+                    Grid.Column="0"
                     Margin="5"
                     Name="TimerTextBlock"
                     Text="00:00"
                     VerticalAlignment="Center" />
                 <ProgressBar
                     CornerRadius="2"
-                    Grid.Column="2"
+                    Grid.Column="1"
                     Height="20"
                     Margin="1,6,6,6"
                     Maximum="1000"
@@ -400,7 +390,7 @@
                 </ProgressBar>
                 <ProgressBar
                     CornerRadius="3"
-                    Grid.Column="2"
+                    Grid.Column="1"
                     Margin="0,5,5,5"
                     Maximum="1000"
                     Minimum="0"
@@ -418,7 +408,7 @@
                     Background="#6b82b2"
                     Click="SettingsButton_Click"
                     Content="{x:Static resources:Labels.Settings}"
-                    Grid.Column="3"
+                    Grid.Column="2"
                     IsEnabled="{Binding ButtonsAvailable}">
                     <Button.Styles>
                         <Style Selector="Button:pointerover /template/ ContentPresenter">
@@ -426,7 +416,7 @@
                         </Style>
                     </Button.Styles>
                 </Button>
-                <Grid Grid.Column="3" IsVisible="{Binding SettingsOpen}">
+                <Grid Grid.Column="2" IsVisible="{Binding SettingsOpen}">
                     <li:LoadingIndicator
                         Foreground="White"
                         Height="30"
@@ -437,7 +427,7 @@
                     Background="#6b82b2"
                     Click="DebugWindowButton_Click"
                     Content="{x:Static resources:Labels.DebugMenu}"
-                    Grid.Column="4"
+                    Grid.Column="3"
                     IsEnabled="{Binding DebugWindowButtonEnabled}"
                     IsVisible="{Binding Settings.DebugMode}"
                     Margin="5,0,0,0">
@@ -447,7 +437,7 @@
                         </Style>
                     </Button.Styles>
                 </Button>
-                <Grid Grid.Column="4" IsVisible="{Binding DebugWindowButtonSpinnerEnabled}">
+                <Grid Grid.Column="3" IsVisible="{Binding DebugWindowButtonSpinnerEnabled}">
                     <li:LoadingIndicator
                         Foreground="White"
                         Height="30"
@@ -470,7 +460,7 @@
                     Background="#5755d9"
                     Click="FindSelectedButton_Click"
                     Content="{x:Static resources:Labels.FindSelected}"
-                    Grid.Column="5"
+                    Grid.Column="4"
                     IsEnabled="{Binding MainTaskAvailable}"
                     Margin="5,0,0,0">
                     <Button.Styles>
@@ -479,7 +469,7 @@
                         </Style>
                     </Button.Styles>
                 </Button>
-                <Grid Grid.Column="5" IsVisible="{Binding MainTaskProcessing}">
+                <Grid Grid.Column="4" IsVisible="{Binding MainTaskProcessing}">
                     <li:LoadingIndicator
                         Foreground="White"
                         Height="30"
@@ -490,7 +480,7 @@
             <ContentControl Grid.Row="7" x:Name="SettingsContent" />
             <views:LogViewer
                 Grid.Row="7"
-                Margin="5"
+                Margin="5,0,5,5"
                 x:Name="LogViewer" />
             <TextBlock
                 Background="#0e1117"

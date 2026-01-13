@@ -6,94 +6,22 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Octokit;
+using VolumetricSelection2077.Enums;
+
 namespace VolumetricSelection2077.Services;
 
 public class UpdateService
 {
     /// <summary>
-    /// Parses the version string into an array of int 
+    /// Gets the most recent version and changelog
     /// </summary>
-    /// <param name="version"></param>
     /// <returns></returns>
-    /// <exception cref="ArgumentException">The type of the version does not match known types, or empty string provided</exception>
-    /// <exception cref="Exception">Fails to parse parts to int or fails to replace using regex</exception>
-    private static int[] ParseVersion(string version)
+    /// <exception cref="ApiException">Fails to get remove info</exception>
+    public static async Task<(string, string)> GetChangelog()
     {
-        if (string.IsNullOrEmpty(version))
-            throw new ArgumentException($"Invalid version input: {version}");
-        try
-        {
-            var rawDot = version.Replace("v", "").Split('.');
-            var rawDash = version.Replace("v", "").Split('-');
-            int[] output = new int[5];
-            output[0] = int.Parse(rawDot[0]);
-            output[1] = int.Parse(rawDot[1]);
-            output[2] = int.Parse(rawDot[2].Split("-")[0]);
-            if (rawDash.Length == 1)
-            {
-                output[3] = 1000;
-                output[4] = 1000;
-            }
-            else
-            {
-                switch (Regex.Replace(rawDash[1], @"\d", ""))
-                {
-                    case "alpha":
-                        output[3] = 1;
-                        break;
-                    case "beta":
-                        output[3] = 2;
-                        break;
-                    case "rc":
-                        output[3] = 3;
-                        break;
-                    default:
-                        throw new ArgumentException($"Unknown version type: {Regex.Replace(rawDash[1], @"\d", "")}");
-                }
-                output[4] = int.Parse(Regex.Replace(rawDash[1], @"\D", ""));
-            }
-            return output;
-        }
-        catch (Exception e)
-        {
-            throw new Exception($"Failed to parse version: {version}", e);
-        }
-    }
-
-    public enum VersionRelation
-    {
-        Newer,
-        Same,
-        Older
-    }
-    /// <summary>
-    /// Checks the relationship between two version strings
-    /// </summary>
-    /// <param name="ver1"></param>
-    /// <param name="ver2"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentException">One or both inputs are empty</exception>
-    /// <exception cref="Exception">Fails to parse version strings</exception>
-    public static VersionRelation IsVersion1Newer(string ver1, string ver2)
-    {
-        if (string.IsNullOrEmpty(ver1) || string.IsNullOrEmpty(ver2))
-            throw new ArgumentException($"Invalid version input: {ver1}, {ver2}");
-        
-        var ver1Arr = ParseVersion(ver1);
-        var ver2Arr = ParseVersion(ver2);
-        for (int i = 0; i < ver1Arr.Length; i++)
-        {
-            if (ver1Arr[i] > ver2Arr[i])
-            {
-                return VersionRelation.Newer;
-            }
-
-            if (ver1Arr[i] < ver2Arr[i])
-            {
-                return VersionRelation.Older;
-            }
-        }
-        return VersionRelation.Same;
+        var client = new GitHubClient(new ProductHeaderValue("VolumetricSelection2077"));
+        var release = await client.Repository.Release.GetLatest("notaspirit", "VolumetricSelection2077");
+        return (release.TagName.Replace("v", ""), release.Body);
     }
     
     /// <summary>
@@ -136,6 +64,8 @@ public class UpdateService
         
         string? downloadUrlApp = null;
         string? downloadUrlCet = null;
+
+        var mainZipName = OperatingSystem.IsWindows() ? "portable-win" : "portable-linux";
         
         try
         {
@@ -143,7 +73,7 @@ public class UpdateService
             var release = await client.Repository.Release.GetLatest("notaspirit", "VolumetricSelection2077");
             foreach (var asset in release.Assets)
             {
-                if (asset.Name.Contains("portable"))
+                if (asset.Name.Contains(mainZipName))
                 {
                     downloadUrlApp = asset.BrowserDownloadUrl;
                 }
@@ -203,7 +133,7 @@ public class UpdateService
             string unzipPathCet;
             if (string.IsNullOrEmpty(SettingsService.Instance.CETInstallLocation))
             {
-                if (ValidationService.ValidateGamePath(SettingsService.Instance.GameDirectory).Item1 != ValidationService.GamePathResult.Valid)
+                if (ValidationService.ValidateGamePath(SettingsService.Instance.GameDirectory).Item1 != GamePathValidationResult.Valid)
                 {
                     throw new Exception("Could not find valid target location to install VS2077 CET. Please set the game path or custom directory in the settings and restart the application to try again.");
                 }
@@ -233,11 +163,13 @@ public class UpdateService
         {
             throw new Exception($"Failed to unzip latest release", ex);
         }
-        
-        var exePath = Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, "VolumetricSelection2077.exe");
-        var scriptPath = Path.Combine(rootTempPath, "update.ps1");
-        var vbsScriptPath = Path.Combine(rootTempPath, "update.vbs");
-        File.WriteAllText(scriptPath, $@"
+
+        if (OperatingSystem.IsWindows())
+        {
+            var exePath = Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, "VolumetricSelection2077.exe");
+            var scriptPath = Path.Combine(rootTempPath, "update.ps1");
+            var vbsScriptPath = Path.Combine(rootTempPath, "update.vbs");
+            File.WriteAllText(scriptPath, $@"
 $exePath = ""{exePath}""
 $unzipPath = ""{unzipPath}""
 $appBaseDir = ""{AppContext.BaseDirectory}""
@@ -256,31 +188,28 @@ Remove-Item -Path $rootTempPath -Recurse -Force -ErrorAction SilentlyContinue
 
 ");
         
-        File.WriteAllText(vbsScriptPath, $@"Set objShell = CreateObject(""WScript.Shell"")
+            File.WriteAllText(vbsScriptPath, $@"Set objShell = CreateObject(""WScript.Shell"")
 objShell.Run ""powershell.exe -ExecutionPolicy Bypass -File """"{scriptPath}"""""", 0, False
 ");
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = "wscript.exe",
-            Arguments = $"\"{vbsScriptPath}\"",
-            UseShellExecute = true
-        });
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "wscript.exe",
+                Arguments = $"\"{vbsScriptPath}\"",
+                UseShellExecute = true
+            });
         
-        SettingsService.Instance.DidUpdate = true;
-        SettingsService.Instance.SaveSettings();
-        Environment.Exit(0);
-    }
-
-    /// <summary>
-    /// Gets the most recent version and changelog
-    /// </summary>
-    /// <returns></returns>
-    /// <exception cref="ApiException">Fails to get remove info</exception>
-    public static async Task<(string, string)> GetChangelog()
-    {
-        var client = new GitHubClient(new ProductHeaderValue("VolumetricSelection2077"));
-        var release = await client.Repository.Release.GetLatest("notaspirit", "VolumetricSelection2077");
-        return (release.TagName.Replace("v", ""), release.Body);
+            SettingsService.Instance.DidUpdate = true;
+            SettingsService.Instance.SaveSettings();
+            Environment.Exit(0);   
+        }
+        else
+        {
+            MoveDirectoryWithOverwrite(rootTempPath, AppContext.BaseDirectory);
+            
+            SettingsService.Instance.DidUpdate = true;
+            SettingsService.Instance.SaveSettings();
+            OsUtilsService.RestartApp();
+        }
     }
     
     private static void MoveDirectoryWithOverwrite(string source, string destination)
@@ -298,5 +227,55 @@ objShell.Run ""powershell.exe -ExecutionPolicy Bypass -File """"{scriptPath}""""
             File.Move(file, destFile, true);
         }
         Directory.Delete(source, true);
+    }
+    
+    /// <summary>
+    /// Parses the version string into an array of int 
+    /// </summary>
+    /// <param name="version"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException">The type of the version does not match known types, or empty string provided</exception>
+    /// <exception cref="Exception">Fails to parse parts to int or fails to replace using regex</exception>
+    private static int[] ParseVersion(string version)
+    {
+        if (string.IsNullOrEmpty(version))
+            throw new ArgumentException($"Invalid version input: {version}");
+        try
+        {
+            var rawDot = version.Replace("v", "").Split('.');
+            var rawDash = version.Replace("v", "").Split('-');
+            int[] output = new int[5];
+            output[0] = int.Parse(rawDot[0]);
+            output[1] = int.Parse(rawDot[1]);
+            output[2] = int.Parse(rawDot[2].Split("-")[0]);
+            if (rawDash.Length == 1)
+            {
+                output[3] = 1000;
+                output[4] = 1000;
+            }
+            else
+            {
+                switch (Regex.Replace(rawDash[1], @"\d", ""))
+                {
+                    case "alpha":
+                        output[3] = 1;
+                        break;
+                    case "beta":
+                        output[3] = 2;
+                        break;
+                    case "rc":
+                        output[3] = 3;
+                        break;
+                    default:
+                        throw new ArgumentException($"Unknown version type: {Regex.Replace(rawDash[1], @"\d", "")}");
+                }
+                output[4] = int.Parse(Regex.Replace(rawDash[1], @"\D", ""));
+            }
+            return output;
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Failed to parse version: {version}", e);
+        }
     }
 }
