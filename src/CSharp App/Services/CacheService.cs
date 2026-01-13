@@ -45,7 +45,10 @@ public partial class CacheService
     }
     private static bool IsProcessing { get; set; } = false;
     
-    private CacheService() { }
+    private CacheService()
+    {
+        Initialize();
+    }
     public static CacheService Instance
     {
         get
