@@ -48,8 +48,8 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <Version>1001.0.0</Version>
-    <FileVersion>1001.0.0</FileVersion>
-    <InformationalVersion>1001.0.0</InformationalVersion>
+    <Version>10001.0.0</Version>
+    <FileVersion>10001.0.0</FileVersion>
+    <InformationalVersion>10001.0.0</InformationalVersion>
   </PropertyGroup>
 </Project>
