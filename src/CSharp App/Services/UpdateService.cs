@@ -64,6 +64,8 @@ public class UpdateService
         
         string? downloadUrlApp = null;
         string? downloadUrlCet = null;
+
+        var mainZipName = OperatingSystem.IsWindows() ? "portable-win" : "portable-linux";
         
         try
         {
@@ -71,7 +73,7 @@ public class UpdateService
             var release = await client.Repository.Release.GetLatest("notaspirit", "VolumetricSelection2077");
             foreach (var asset in release.Assets)
             {
-                if (asset.Name.Contains("portable"))
+                if (asset.Name.Contains(mainZipName))
                 {
                     downloadUrlApp = asset.BrowserDownloadUrl;
                 }
@@ -161,11 +163,13 @@ public class UpdateService
         {
             throw new Exception($"Failed to unzip latest release", ex);
         }
-        
-        var exePath = Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, "VolumetricSelection2077.exe");
-        var scriptPath = Path.Combine(rootTempPath, "update.ps1");
-        var vbsScriptPath = Path.Combine(rootTempPath, "update.vbs");
-        File.WriteAllText(scriptPath, $@"
+
+        if (OperatingSystem.IsWindows())
+        {
+            var exePath = Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, "VolumetricSelection2077.exe");
+            var scriptPath = Path.Combine(rootTempPath, "update.ps1");
+            var vbsScriptPath = Path.Combine(rootTempPath, "update.vbs");
+            File.WriteAllText(scriptPath, $@"
 $exePath = ""{exePath}""
 $unzipPath = ""{unzipPath}""
 $appBaseDir = ""{AppContext.BaseDirectory}""
@@ -184,19 +188,28 @@ Remove-Item -Path $rootTempPath -Recurse -Force -ErrorAction SilentlyContinue
 
 ");
         
-        File.WriteAllText(vbsScriptPath, $@"Set objShell = CreateObject(""WScript.Shell"")
+            File.WriteAllText(vbsScriptPath, $@"Set objShell = CreateObject(""WScript.Shell"")
 objShell.Run ""powershell.exe -ExecutionPolicy Bypass -File """"{scriptPath}"""""", 0, False
 ");
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = "wscript.exe",
-            Arguments = $"\"{vbsScriptPath}\"",
-            UseShellExecute = true
-        });
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "wscript.exe",
+                Arguments = $"\"{vbsScriptPath}\"",
+                UseShellExecute = true
+            });
         
-        SettingsService.Instance.DidUpdate = true;
-        SettingsService.Instance.SaveSettings();
-        Environment.Exit(0);
+            SettingsService.Instance.DidUpdate = true;
+            SettingsService.Instance.SaveSettings();
+            Environment.Exit(0);   
+        }
+        else
+        {
+            MoveDirectoryWithOverwrite(rootTempPath, AppContext.BaseDirectory);
+            
+            SettingsService.Instance.DidUpdate = true;
+            SettingsService.Instance.SaveSettings();
+            OsUtilsService.RestartApp();
+        }
     }
     
     private static void MoveDirectoryWithOverwrite(string source, string destination)
