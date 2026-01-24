@@ -72,8 +72,10 @@ function visualizationBox:updateScale()
     component:Toggle(true)
 end
 
-local function projectWorldToScreen(worldPos, camTransform, fovDeg, aspect, screenW, screenH)
+local function projectWorldToScreen(worldPos, camTransform, fovDeg, aspect, screenW, screenH, near, otherWorldPos)
     local function dot(a,b) return a.x*b.x + a.y*b.y + a.z*b.z end
+
+    near = near or 0.1
 
     local camPos = camTransform:GetTranslation()
     local right   = camTransform:GetAxisX()
@@ -85,16 +87,51 @@ local function projectWorldToScreen(worldPos, camTransform, fovDeg, aspect, scre
     local y_cam = dot(vec, up)
     local z_cam = dot(vec, forward)
 
-    if z_cam <= 0 then return nil end
+    -- If point is in front of near plane, project normally.
+    if z_cam > near then
+        local f = 1 / math.tan(math.rad(fovDeg) * 0.5) -- vertical f
+        local ndc_x = (x_cam / z_cam) * (f / aspect)
+        local ndc_y = (y_cam / z_cam) * f
+        local sx = (ndc_x * 0.5 + 0.5) * screenW
+        local sy = (0.5 - ndc_y * 0.5) * screenH -- origin top-left
+        return math.floor(sx + 0.5), math.floor(sy + 0.5), z_cam, false
+    end
 
-    local f = 1 / math.tan(math.rad(fovDeg) * 0.5) -- vertical f
-    local ndc_x = (x_cam / z_cam) * (f / aspect)
-    local ndc_y = (y_cam / z_cam) * f
+    -- If an opposite endpoint is provided and it is in front of the near plane,
+    -- compute the world-space intersection of the segment with the near plane,
+    -- then project that intersection. This avoids mirrored results when vertices are behind the camera.
+    if otherWorldPos then
+        local vec_o = { x = otherWorldPos.x - camPos.x, y = otherWorldPos.y - camPos.y, z = otherWorldPos.z - camPos.z }
+        local x_cam_o = dot(vec_o, right)
+        local y_cam_o = dot(vec_o, up)
+        local z_cam_o = dot(vec_o, forward)
 
-    local sx = (ndc_x * 0.5 + 0.5) * screenW
-    local sy = (0.5 - ndc_y * 0.5) * screenH -- origin top-left
+        if z_cam_o > near and z_cam ~= z_cam_o then
+            -- t along world segment worldPos -> otherWorldPos where cam-space z == near
+            local t = (near - z_cam) / (z_cam_o - z_cam)
+            -- clamp t just in case
+            if t < 0 then t = 0 elseif t > 1 then t = 1 end
+            local ix = worldPos.x + t * (otherWorldPos.x - worldPos.x)
+            local iy = worldPos.y + t * (otherWorldPos.y - worldPos.y)
+            local iz = worldPos.z + t * (otherWorldPos.z - worldPos.z)
+            -- project intersection (should now be at z ~= <=near but we treat it as near)
+            local ivec = { x = ix - camPos.x, y = iy - camPos.y, z = iz - camPos.z }
+            local ix_cam = dot(ivec, right)
+            local iy_cam = dot(ivec, up)
+            local iz_cam = dot(ivec, forward)
+            if iz_cam > 0 then
+                local f = 1 / math.tan(math.rad(fovDeg) * 0.5)
+                local ndc_x = (ix_cam / iz_cam) * (f / aspect)
+                local ndc_y = (iy_cam / iz_cam) * f
+                local sx = (ndc_x * 0.5 + 0.5) * screenW
+                local sy = (0.5 - ndc_y * 0.5) * screenH
+                return math.floor(sx + 0.5), math.floor(sy + 0.5), iz_cam, true
+            end
+        end
+    end
 
-    return math.floor(sx + 0.5), math.floor(sy + 0.5), z_cam
+    -- No valid projection (behind camera or both endpoints behind near plane)
+    return nil
 end
 
 function visualizationBox:drawEdgeVisualizer()
@@ -104,6 +141,7 @@ function visualizationBox:drawEdgeVisualizer()
 
     local drawList = ImGui.GetBackgroundDrawList()
 
+    --[[
     local screenSpaceVerts = {}
 
     for _, v in pairs(self.vertices) do
@@ -122,6 +160,7 @@ function visualizationBox:drawEdgeVisualizer()
             screenSpaceVerts[#screenSpaceVerts + 1] = {x = nil, y = nil}
         end
     end
+    ]]
 
     -- Edges according to buildVertices order:
     -- 1 Back Bottom Left, 2 Back Bottom Right, 3 Back Top Left, 4 Back Top Right
@@ -132,11 +171,17 @@ function visualizationBox:drawEdgeVisualizer()
         {1,5}, {2,6}, {3,7}, {4,8}  -- connections between faces
     }
 
+    local near = 0.1
     for _, e in ipairs(edges) do
         local a, b = e[1], e[2]
-        local v1, v2 = screenSpaceVerts[a], screenSpaceVerts[b]
-        if v1.x and v2.x then
-            ImGui.ImDrawListAddLine(drawList, v1.x, v1.y, v2.x, v2.y, 0xFF00FF00, 2.0)
+        local wa, wb = self.vertices[a], self.vertices[b]
+
+        -- ask projectWorldToScreen to clip against near using the other endpoint when needed
+        local ax, ay = projectWorldToScreen(wa, camMatrix, fov, screenW / screenH, screenW, screenH, near, wb)
+        local bx, by = projectWorldToScreen(wb, camMatrix, fov, screenW / screenH, screenW, screenH, near, wa)
+
+        if ax and bx then
+            ImGui.ImDrawListAddLine(drawList, ax, ay, bx, by, 0xFF000080, 2.0)
         end
     end
 
@@ -152,9 +197,7 @@ function visualizationBox:drawEdgeVisualizer()
     )
     if not sx or not sy then return end
 
-
-    local drawList = ImGui.GetBackgroundDrawList()
-    ImGui.ImDrawListAddCircleFilled(drawList, sx, sy, 30, 0xFF32FF1D, 24)
+    ImGui.ImDrawListAddCircleFilled(drawList, sx, sy, 5, 0xFF000080, 24)
 end
 
 function visualizationBox:LogCurrentStats()
