@@ -12,6 +12,7 @@ registerForEvent('onOverlayClose', function()
 end)
 
 registerForEvent('onDraw', function()
+    VSGui.drawVisualizer()
     if isOverlayVisible then
        VSGui.CETGui()
     end

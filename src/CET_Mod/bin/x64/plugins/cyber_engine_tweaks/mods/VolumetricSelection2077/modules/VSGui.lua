@@ -293,6 +293,9 @@ local function controlsTab()
         scalePoint.z, changedScaleZ = ImGui.DragFloat("##scalez", scalePoint.z, settingsInstance.currentMove)
 
         if changedScaleX or changedScaleY or changedScaleZ then
+            scalePoint.x = math.max(scalePoint.x, 0)
+            scalePoint.y = math.max(scalePoint.y, 0)
+            scalePoint.z = math.max(scalePoint.z, 0)
             selectionBox:setScale(scalePoint)
             selectionBox:updateScale()
             settingsInstance:update("selectionBox", selectionBox)
@@ -523,6 +526,12 @@ function CETGui()
     ImGui.End()
 end
 
+function drawVisualizer()
+    if selectionBox ~= nil and isHighlighted then
+        selectionBox:drawEdgeVisualizer()
+    end
+end
+
 function onShutdown()
     selectionBox:despawn()
 end
@@ -537,6 +546,7 @@ end
 
 return {
     CETGui = CETGui,
+    drawVisualizer = drawVisualizer,
     onShutdown = onShutdown,
     onSaveLoaded = onSaveLoaded
 }

@@ -72,6 +72,91 @@ function visualizationBox:updateScale()
     component:Toggle(true)
 end
 
+local function projectWorldToScreen(worldPos, camTransform, fovDeg, aspect, screenW, screenH)
+    local function dot(a,b) return a.x*b.x + a.y*b.y + a.z*b.z end
+
+    local camPos = camTransform:GetTranslation()
+    local right   = camTransform:GetAxisX()
+    local forward = camTransform:GetAxisY()
+    local up      = camTransform:GetAxisZ()
+
+    local vec = { x = worldPos.x - camPos.x, y = worldPos.y - camPos.y, z = worldPos.z - camPos.z }
+    local x_cam = dot(vec, right)
+    local y_cam = dot(vec, up)
+    local z_cam = dot(vec, forward)
+
+    if z_cam <= 0 then return nil end
+
+    local f = 1 / math.tan(math.rad(fovDeg) * 0.5) -- vertical f
+    local ndc_x = (x_cam / z_cam) * (f / aspect)
+    local ndc_y = (y_cam / z_cam) * f
+
+    local sx = (ndc_x * 0.5 + 0.5) * screenW
+    local sy = (0.5 - ndc_y * 0.5) * screenH -- origin top-left
+
+    return math.floor(sx + 0.5), math.floor(sy + 0.5), z_cam
+end
+
+function visualizationBox:drawEdgeVisualizer()
+    local camMatrix = GetPlayer():GetFPPCameraComponent():GetLocalToWorld()
+    local fov = GetPlayer():GetFPPCameraComponent():GetFOV()
+    local screenW, screenH = 2560, 1440
+
+    local drawList = ImGui.GetBackgroundDrawList()
+
+    local screenSpaceVerts = {}
+
+    for _, v in pairs(self.vertices) do
+        local sx, sy, sz = projectWorldToScreen(
+            v,
+            camMatrix,
+            fov,
+            screenW / screenH,
+            screenW,
+            screenH
+        )
+        if sx and sy then
+            ImGui.ImDrawListAddCircleFilled(drawList, sx, sy, 5, 0xFFFF0000, 12)
+            screenSpaceVerts[#screenSpaceVerts + 1] = {x = sx, y = sy}
+        else 
+            screenSpaceVerts[#screenSpaceVerts + 1] = {x = nil, y = nil}
+        end
+    end
+
+    -- Edges according to buildVertices order:
+    -- 1 Back Bottom Left, 2 Back Bottom Right, 3 Back Top Left, 4 Back Top Right
+    -- 5 Front Bottom Left, 6 Front Bottom Right, 7 Front Top Left, 8 Front Top Right
+    local edges = {
+        {1,2}, {2,4}, {4,3}, {3,1}, -- back face
+        {5,6}, {6,8}, {8,7}, {7,5}, -- front face
+        {1,5}, {2,6}, {3,7}, {4,8}  -- connections between faces
+    }
+
+    for _, e in ipairs(edges) do
+        local a, b = e[1], e[2]
+        local v1, v2 = screenSpaceVerts[a], screenSpaceVerts[b]
+        if v1.x and v2.x then
+            ImGui.ImDrawListAddLine(drawList, v1.x, v1.y, v2.x, v2.y, 0xFF00FF00, 2.0)
+        end
+    end
+
+
+
+    local sx, sy, sz = projectWorldToScreen(
+        self.origin,
+        camMatrix,
+        fov,
+        screenW / screenH,
+        screenW,
+        screenH
+    )
+    if not sx or not sy then return end
+
+
+    local drawList = ImGui.GetBackgroundDrawList()
+    ImGui.ImDrawListAddCircleFilled(drawList, sx, sy, 30, 0xFF32FF1D, 24)
+end
+
 function visualizationBox:LogCurrentStats()
     if not self.entity then return end
     local rotation = self.entity:GetWorldOrientation()
