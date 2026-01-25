@@ -4,6 +4,7 @@ local visualizationBox = require('classes/visualizationBox')
 local StatusMessage = require('modules/StatusMessage')
 local settings = require('modules/settings')
 local jsonUtils = require('modules/jsonUtils')
+local GameSession = require("libs/GameSession")
 
 -- Initialize variables
 -- 3d Objects
@@ -527,9 +528,8 @@ function CETGui()
 end
 
 function drawVisualizer()
-    if selectionBox ~= nil and isHighlighted then
-        selectionBox:drawEdgeVisualizer()
-    end
+    if (selectionBox == nil) or (not isHighlighted) or (GameSession.IsPaused()) then return end
+    selectionBox:drawEdgeVisualizer()
 end
 
 function onShutdown()
