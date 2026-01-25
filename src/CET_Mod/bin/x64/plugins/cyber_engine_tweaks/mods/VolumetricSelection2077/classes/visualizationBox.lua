@@ -140,21 +140,21 @@ local edges = {
     {1,5}, {2,6}, {3,7}, {4,8}  -- connections between faces
 }
 
+local screenW, screenH = 1, 1
+local aspectRatio = 1
+local near = 0.1
 
 function visualizationBox:drawEdgeVisualizer()
     local camMatrix = GetPlayer():GetFPPCameraComponent():GetLocalToWorld()
     local fov = GetPlayer():GetFPPCameraComponent():GetFOV()
-    local screenW, screenH = 2560, 1440
-
     local drawList = ImGui.GetBackgroundDrawList()
 
-    local near = 0.1
     for _, e in ipairs(edges) do
         local a, b = e[1], e[2]
         local wa, wb = self.vertices[a], self.vertices[b]
 
-        local ax, ay = projectWorldToScreen(wa, camMatrix, fov, screenW / screenH, screenW, screenH, near, wb)
-        local bx, by = projectWorldToScreen(wb, camMatrix, fov, screenW / screenH, screenW, screenH, near, wa)
+        local ax, ay = projectWorldToScreen(wa, camMatrix, fov, aspectRatio, screenW, screenH, near, wb)
+        local bx, by = projectWorldToScreen(wb, camMatrix, fov, aspectRatio, screenW, screenH, near, wa)
 
         if ax and bx then
             ImGui.ImDrawListAddLine(drawList, ax, ay, bx, by, 0xFF000080, 2.0)
@@ -172,6 +172,20 @@ function visualizationBox:drawEdgeVisualizer()
     if not sx or not sy then return end
 
     ImGui.ImDrawListAddCircleFilled(drawList, sx, sy, 5, 0xFF000080, 24)
+end
+
+function visualizationBox:onResume()
+    local resSetting = Game.GetSettingsSystem():GetVar("/video/display", "Resolution"):GetValue()
+    local index = 1
+    for settingsPart in string.gmatch(resSetting, "[^x]+") do
+        if index == 1 then
+            screenW = tonumber(settingsPart)
+        elseif index == 2 then
+            screenH = tonumber(settingsPart)
+        end
+        index = index + 1
+    end
+    aspectRatio = screenW / screenH
 end
 
 function visualizationBox:LogCurrentStats()

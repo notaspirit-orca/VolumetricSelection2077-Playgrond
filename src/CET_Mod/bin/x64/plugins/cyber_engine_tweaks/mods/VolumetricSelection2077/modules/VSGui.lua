@@ -544,9 +544,15 @@ function onSaveLoaded()
 	end
 end
 
+function onResume()
+    if selectionBox == nil then return end
+    selectionBox:onResume()
+end
+
 return {
     CETGui = CETGui,
     drawVisualizer = drawVisualizer,
     onShutdown = onShutdown,
-    onSaveLoaded = onSaveLoaded
+    onSaveLoaded = onSaveLoaded,
+    onResume = onResume
 }
