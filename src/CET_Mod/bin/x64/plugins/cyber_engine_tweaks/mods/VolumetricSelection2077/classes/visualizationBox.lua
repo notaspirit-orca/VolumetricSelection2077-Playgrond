@@ -87,7 +87,6 @@ local function projectWorldToScreen(worldPos, camTransform, fovDeg, aspect, scre
     local y_cam = dot(vec, up)
     local z_cam = dot(vec, forward)
 
-    -- If point is in front of near plane, project normally.
     if z_cam > near then
         local f = 1 / math.tan(math.rad(fovDeg) * 0.5) -- vertical f
         local ndc_x = (x_cam / z_cam) * (f / aspect)
@@ -130,9 +129,17 @@ local function projectWorldToScreen(worldPos, camTransform, fovDeg, aspect, scre
         end
     end
 
-    -- No valid projection (behind camera or both endpoints behind near plane)
     return nil
 end
+
+-- 1 Back Bottom Left, 2 Back Bottom Right, 3 Back Top Left, 4 Back Top Right
+-- 5 Front Bottom Left, 6 Front Bottom Right, 7 Front Top Left, 8 Front Top Right
+local edges = {
+    {1,2}, {2,4}, {4,3}, {3,1}, -- back face
+    {5,6}, {6,8}, {8,7}, {7,5}, -- front face
+    {1,5}, {2,6}, {3,7}, {4,8}  -- connections between faces
+}
+
 
 function visualizationBox:drawEdgeVisualizer()
     local camMatrix = GetPlayer():GetFPPCameraComponent():GetLocalToWorld()
@@ -141,42 +148,11 @@ function visualizationBox:drawEdgeVisualizer()
 
     local drawList = ImGui.GetBackgroundDrawList()
 
-    --[[
-    local screenSpaceVerts = {}
-
-    for _, v in pairs(self.vertices) do
-        local sx, sy, sz = projectWorldToScreen(
-            v,
-            camMatrix,
-            fov,
-            screenW / screenH,
-            screenW,
-            screenH
-        )
-        if sx and sy then
-            ImGui.ImDrawListAddCircleFilled(drawList, sx, sy, 5, 0xFFFF0000, 12)
-            screenSpaceVerts[#screenSpaceVerts + 1] = {x = sx, y = sy}
-        else 
-            screenSpaceVerts[#screenSpaceVerts + 1] = {x = nil, y = nil}
-        end
-    end
-    ]]
-
-    -- Edges according to buildVertices order:
-    -- 1 Back Bottom Left, 2 Back Bottom Right, 3 Back Top Left, 4 Back Top Right
-    -- 5 Front Bottom Left, 6 Front Bottom Right, 7 Front Top Left, 8 Front Top Right
-    local edges = {
-        {1,2}, {2,4}, {4,3}, {3,1}, -- back face
-        {5,6}, {6,8}, {8,7}, {7,5}, -- front face
-        {1,5}, {2,6}, {3,7}, {4,8}  -- connections between faces
-    }
-
     local near = 0.1
     for _, e in ipairs(edges) do
         local a, b = e[1], e[2]
         local wa, wb = self.vertices[a], self.vertices[b]
 
-        -- ask projectWorldToScreen to clip against near using the other endpoint when needed
         local ax, ay = projectWorldToScreen(wa, camMatrix, fov, screenW / screenH, screenW, screenH, near, wb)
         local bx, by = projectWorldToScreen(wb, camMatrix, fov, screenW / screenH, screenW, screenH, near, wa)
 
@@ -184,8 +160,6 @@ function visualizationBox:drawEdgeVisualizer()
             ImGui.ImDrawListAddLine(drawList, ax, ay, bx, by, 0xFF000080, 2.0)
         end
     end
-
-
 
     local sx, sy, sz = projectWorldToScreen(
         self.origin,
