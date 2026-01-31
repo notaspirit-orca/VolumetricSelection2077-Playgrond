@@ -4,43 +4,29 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
-using Avalonia;
 using Avalonia.Interactivity;
+using VolumetricSelection2077.Enums;
 using VolumetricSelection2077.Models;
-using VolumetricSelection2077.Resources;
 using VolumetricSelection2077.Services;
-using VolumetricSelection2077.Views;
 
-namespace VolumetricSelection2077
+namespace VolumetricSelection2077.Views
 {
     public partial class SettingsWindow : Window
     {
-        private SettingsViewModel? _settingsViewModel;
-        private CacheService _cacheService;
+        private readonly SettingsViewModel _settingsViewModel;
+        private readonly CacheService _cacheService;
         
-        private bool showedDialog;
-        private bool moveCache = true;
+        private bool _showedDialog;
+        private bool _moveCache = true;
         
         public SettingsWindow()
         {
             InitializeComponent();
             DataContext = new SettingsViewModel();
-            _settingsViewModel = DataContext as SettingsViewModel;
+            _settingsViewModel = (DataContext as SettingsViewModel)!;
             _cacheService = CacheService.Instance;
             Closing += OnSettingsWindowClosing;
             Closed += OnSettingsWindowClosed;
-            Opened += OnOpened;
-        }
-
-        private void OnOpened(object? sender, EventArgs e)
-        {
-            if (Owner is Window parentWindow)
-            {
-                double x = parentWindow.Position.X + (parentWindow.Bounds.Width - Bounds.Width) / 2;
-                double y = parentWindow.Position.Y + (parentWindow.Bounds.Height - Bounds.Height) / 2;
-            
-                Position = new PixelPoint((int)x, (int)y);
-            }
         }
         
         private void RestartApp()
@@ -64,64 +50,93 @@ namespace VolumetricSelection2077
         private async void ClearVanillaCache_Click(object sender, RoutedEventArgs e)
         {
             if(!_cacheService.IsInitialized) return;
-            await Task.Run(() => _cacheService.ClearDatabase(CacheDatabases.Vanilla,
-                UtilService.ShouldResize(CacheDatabases.Vanilla, _settingsViewModel.CacheStats,
-                    _settingsViewModel.Settings.CacheDirectory)));
+            _settingsViewModel.CacheWorking = true;
+            await Task.Run(() => _cacheService.ClearDatabase(CacheDatabases.Vanilla));
+            _settingsViewModel.CacheWorking = false;
             UpdateCacheStats();
         }
         
         private async void ClearModdedCache_Click(object sender, RoutedEventArgs e)
         {
             if(!_cacheService.IsInitialized) return;
-            await Task.Run(() => _cacheService.ClearDatabase(CacheDatabases.Modded,
-                UtilService.ShouldResize(CacheDatabases.Modded, _settingsViewModel.CacheStats,
-                    _settingsViewModel.Settings.CacheDirectory)));
+            _settingsViewModel.CacheWorking = true;
+            await Task.Run(() => _cacheService.ClearDatabase(CacheDatabases.Modded));
+            _settingsViewModel.CacheWorking = false;
             UpdateCacheStats();
         }
         
         private async void ClearVanillaBoundsCache_Click(object sender, RoutedEventArgs e)
         {
             if(!_cacheService.IsInitialized) return;
-            await Task.Run(() => _cacheService.ClearDatabase(CacheDatabases.VanillaBounds,
-                UtilService.ShouldResize(CacheDatabases.VanillaBounds, _settingsViewModel.CacheStats,
-                    _settingsViewModel.Settings.CacheDirectory)));
+            _settingsViewModel.CacheWorking = true;
+            await Task.Run(() => _cacheService.ClearDatabase(CacheDatabases.VanillaBounds));
+            _settingsViewModel.CacheWorking = false;
             UpdateCacheStats();
         }
         
         private async void ClearModdedBoundsCache_Click(object sender, RoutedEventArgs e)
         {
             if(!_cacheService.IsInitialized) return;
-            await Task.Run(() => _cacheService.ClearDatabase(CacheDatabases.ModdedBounds,
-                UtilService.ShouldResize(CacheDatabases.ModdedBounds, _settingsViewModel.CacheStats,
-                    _settingsViewModel.Settings.CacheDirectory)));
+            _settingsViewModel.CacheWorking = true;
+            await Task.Run(() => _cacheService.ClearDatabase(CacheDatabases.ModdedBounds));
+            _settingsViewModel.CacheWorking = false;
             UpdateCacheStats();
+        }
+
+        private void OpenBackupDir_Click(object sender, RoutedEventArgs e)
+        {
+            OsUtilsService.OpenFolder(_settingsViewModel.Settings.BackupDirectory);
+        }
+        
+        private void OpenCustomSelectionDir_Click(object sender, RoutedEventArgs e)
+        {
+            OsUtilsService.OpenFolder(_settingsViewModel.Settings.CustomSelectionFilePath);
+        }
+        
+        private void OpenCacheDir_Click(object sender, RoutedEventArgs e)
+        {
+            OsUtilsService.OpenFolder(_settingsViewModel.Settings.CacheDirectory);
+        }
+        
+        private void OpenOutputDir_Click(object sender, RoutedEventArgs e)
+        {
+            OsUtilsService.OpenFolder(_settingsViewModel.Settings.OutputDirectory);
+        }
+
+        private void OpenCETDir_Click(object sender, RoutedEventArgs e)
+        {
+            OsUtilsService.OpenFolder(_settingsViewModel.Settings.CETInstallLocation);
+        }
+        
+        private void OpenGameDir_Click(object sender, RoutedEventArgs e)
+        {
+            OsUtilsService.OpenFolder(_settingsViewModel.Settings.GameDirectory);
         }
 
         private async void OnSettingsWindowClosing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (!showedDialog && (bool)_settingsViewModel?.PersistentCache.CachePathChanged)
-            {
-                showedDialog = true;
-                e.Cancel = true;
-                var result = await DialogService.ShowDialog("Cache Path Changed!",
-                    "Move the current cache, or initialize a new cache at the new location (creating one if none exists)?",
-                    new [] { new DialogButton("Move", DialogButtonStyling.Enum.Primary), new DialogButton("Initialize", DialogButtonStyling.Enum.Secondary) },
-                    this);
-                moveCache = result == 0;
-                Close();
-            }
+            if (_showedDialog || !_settingsViewModel.PersistentCache.CachePathChanged)
+                return;
+            _showedDialog = true;
+            e.Cancel = true;
+            var result = await DialogService.ShowDialog("Cache Path Changed!",
+                "Move the current cache, or initialize a new cache at the new location (creating one if none exists)?",
+                new [] { new DialogButton("Move", DialogButtonStyling.Primary), new DialogButton("Initialize", DialogButtonStyling.Secondary) },
+                this);
+            _moveCache = result == 0;
+            Close();
         }
         
         private void OnSettingsWindowClosed(object? sender, EventArgs e)
         {
-            _settingsViewModel?.Settings.SaveSettings();
-            if ((bool)_settingsViewModel?.PersistentCache.CachePathChanged)
+            _settingsViewModel.Settings.SaveSettings();
+            if (_settingsViewModel.PersistentCache.CachePathChanged)
             {
                 bool successMove = false;
                 try
                 {
-                    successMove = moveCache ? CacheService.Instance.Move(_settingsViewModel?.PersistentCache.InitialCachePath,
-                        _settingsViewModel?.Settings.CacheDirectory) : true;
+                    successMove = !_moveCache || CacheService.Instance.Move(_settingsViewModel.PersistentCache.InitialCachePath,
+                        _settingsViewModel.Settings.CacheDirectory);
                 }
                 catch (Exception ex)
                 {
@@ -130,18 +145,18 @@ namespace VolumetricSelection2077
 
                 if (successMove)
                 {
-                    _settingsViewModel.PersistentCache.InitialCachePath = _settingsViewModel?.Settings.CacheDirectory;
+                    _settingsViewModel.PersistentCache.InitialCachePath = _settingsViewModel.Settings.CacheDirectory;
                 }
                 else
                 {
-                    _settingsViewModel.Settings.CacheDirectory = _settingsViewModel?.PersistentCache.InitialCachePath;
-                    _settingsViewModel?.Settings.SaveSettings();
+                    _settingsViewModel.Settings.CacheDirectory = _settingsViewModel.PersistentCache.InitialCachePath;
+                    _settingsViewModel.Settings.SaveSettings();
                 }
                 
                 CacheService.Instance.Dispose().Wait();
             }
             
-            if ((bool)_settingsViewModel?.PersistentCache.RequiresRestart)
+            if (_settingsViewModel.PersistentCache.RequiresRestart)
                 RestartApp();
             CacheService.Instance.Initialize();
         }

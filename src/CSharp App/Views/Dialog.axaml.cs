@@ -12,36 +12,23 @@ namespace VolumetricSelection2077.Views;
 public partial class Dialog : Window
 {
     private DialogWindowViewModel? _dialogWindowViewModel;
-    
+    private bool _wasButtonClicked = false;
+    public int DialogResult { get; set; } = -1;
     public Dialog(string title, string message, DialogButton[] buttons)
     {
         InitializeComponent();
-        Opened += OnOpened;
-        Closing += (_, args) => { args.Cancel = !buttonClicked; };
+        Closing += (_, args) => { args.Cancel = !_wasButtonClicked; };
 
         DataContext = new DialogWindowViewModel(title, message, buttons);
         _dialogWindowViewModel = DataContext as DialogWindowViewModel;
     }
-
-    private void OnOpened(object? sender, EventArgs e)
-    {
-        if (Owner is Window parentWindow)
-        {
-            double x = parentWindow.Position.X + (parentWindow.Bounds.Width - Bounds.Width) / 2;
-            double y = parentWindow.Position.Y + (parentWindow.Bounds.Height - Bounds.Height) / 2;
-            
-            Position = new PixelPoint((int)x, (int)y);
-        }
-    }
-
-    public int DialogResult { get; set; } = -1;
-    private bool buttonClicked = false;
+    
     private void DynamicButton_Click(object? sender, RoutedEventArgs e)
     {
         if (sender is Button button && button.DataContext is DialogButton dialogButton)
         {
             DialogResult = _dialogWindowViewModel?.ButtonContents.IndexOf(dialogButton) ?? -1;
-            buttonClicked = true;
+            _wasButtonClicked = true;
             Close();
         }
     }
