@@ -53,8 +53,8 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <Version>1100.0.02</Version>
-    <FileVersion>1100.0.02</FileVersion>
-    <InformationalVersion>1100.0.02</InformationalVersion>
+    <Version>1100.0.03</Version>
+    <FileVersion>1100.0.03</FileVersion>
+    <InformationalVersion>1100.0.03</InformationalVersion>
   </PropertyGroup>
 </Project>
